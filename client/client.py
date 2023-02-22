@@ -2,8 +2,10 @@ import socket
 import struct
 from uuid import getnode as get_mac
 from random import randint
-
-
+source_port = "20961"
+dest_port = "30961"
+BROADCAST_ADDRESS = '<broadcast>'
+DHCP_SERVER_PORT = 67
 def getMacInBytes():
     mac = str(hex(get_mac()))
     mac = mac[2:]
@@ -96,24 +98,25 @@ if __name__ == '__main__':
     dhcps.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)  # broadcast
 
     try:
-        dhcps.bind(('', 68))  # we want to send from port 68
+        dhcps.bind(('0.0.0.0', 8080))  # we want to send from port 68
     except Exception as e:
-        print('port 68 in use...')
+        print(f'port {source_port} in use...')
         dhcps.close()
         input('press any key to quit...')
         exit()
 
     # buiding and sending the DHCPDiscover packet
+
     discoverPacket = DHCPDiscover()
-    dhcps.sendto(discoverPacket.buildPacket(), ('<broadcast>', 67))
+    dhcps.sendto(discoverPacket.buildPacket(), (BROADCAST_ADDRESS, DHCP_SERVER_PORT))
 
     print('DHCP Discover sent waiting for reply...\n')
 
     # receiving DHCPOffer packet
-    dhcps.settimeout(3)
+    dhcps.settimeout(10)
     try:
         while True:
-            data = dhcps.recv(1024)
+            data = dhcps.recv(20961)
             offer = DHCPOffer(data, discoverPacket.transactionID)
             if offer.offerIP:
                 offer.printOffer()
