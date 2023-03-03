@@ -7,6 +7,10 @@ from scapy.layers.l2 import Ether
 
 DHCP_OPTION_DNS_SERVER = 6
 dns_server_ip = "192.168.1.2"
+filter_port = "udp and (port 67 or 68)"
+network_interface = "enp0s3"
+message_types = ["offer", "ack"]
+dns_name = "myDNS.com"
 
 
 def handle_dhcp(pkt):
@@ -19,23 +23,15 @@ def handle_dhcp(pkt):
     server_ip = "192.168.1.1"
     subnet_mask = "255.255.255.0"
     if DHCP in pkt and pkt[DHCP].options[0][1] == 1:
-
         print("Received DHCP Discover from " + pkt[Ether].src)
-        # dhcp_offer = Ether(dst=pkt[Ether].src) / IP(src="192.168.1.1", dst="255.255.255.255") / UDP(sport=67,
-        #                                                                                             dport=68) / BOOTP(
-        #     op=2, yiaddr="192.168.1.100", siaddr="192.168.1.1", xid=pkt[BOOTP].xid) / DHCP(
-        #     options=[("message-type", "offer"), ("subnet_mask", "255.255.255.0"), ("router", "192.168.1.1"),
-        #              ("name_server", "192.168.1.1"), "end"])
-        #
-        # sendp(dhcp_offer)
         dhcp_offer = Ether(src=server_mac, dst=client_mac) / \
                      IP(src="192.168.1.1", dst='255.255.255.255') / \
                      UDP(sport=67, dport=68) / \
                      BOOTP(op=2, yiaddr=client_ip, siaddr=server_ip, xid=xid, chaddr=client_mac) / \
-                     DHCP(options=[('message-type', 'offer'),
+                     DHCP(options=[('message-type', message_types[0]),
                                    ('subnet_mask', subnet_mask),
                                    ('router', server_ip),
-                                   ('domain', 'example.com'),
+                                   ('domain', dns_name),
                                    ('name_server', dns_server_ip),
                                    ('end')])
         sendp(dhcp_offer)
@@ -43,15 +39,15 @@ def handle_dhcp(pkt):
 
     elif DHCP in pkt and pkt[DHCP].options[0][1] == 3:
         print("Received DHCP Request from " + pkt[Ether].src)
-        dhcp_ack = Ether(dst=pkt[Ether].src) / IP(src="192.168.1.1", dst="255.255.255.255") / UDP(sport=67,
-                                                                                                  dport=68) / BOOTP(
+        dhcp_ack = Ether(dst=pkt[Ether].src) / IP(src=server_ip, dst="255.255.255.255") / UDP(sport=67,
+                                                                                              dport=68) / BOOTP(
             op=2, yiaddr=client_ip, siaddr=server_ip, xid=xid, chaddr=client_mac) / DHCP(
-            options=[("message-type", "ack"), ("subnet_mask", subnet_mask), ("router", server_ip),
-                     ('domain', 'example.com'),
+            options=[("message-type", message_types[1]), ("subnet_mask", subnet_mask), ("router", server_ip),
+                     ('domain', dns_name),
                      ('name_server', dns_server_ip), "end"])
         sendp(dhcp_ack)
         print("Sent DHCP Ack to " + pkt[Ether].src)
 
 
 if __name__ == '__main__':
-    sniff(filter="udp and (port 67 or 68)", prn=handle_dhcp, iface="enp0s3")
+    sniff(filter=filter_port, prn=handle_dhcp, iface=network_interface)
