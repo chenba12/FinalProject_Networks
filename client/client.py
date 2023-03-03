@@ -15,7 +15,6 @@ network_interface = "enp0s3"
 
 def handle_ip(pkt):
     global dns_ip, client_ip
-
     time.sleep(1)
     if DHCP in pkt and pkt[DHCP].options[0][1] == 2:
         print("Received DHCP Offer from " + pkt[Ether].src)
