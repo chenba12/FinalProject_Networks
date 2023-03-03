@@ -27,7 +27,7 @@ class Game(Base):
             'category': self.category,
             'price': self.price,
             'score': self.score,
-            'release_date': self.release_year,
+            'release_year': self.release_year,
 
         }
 
