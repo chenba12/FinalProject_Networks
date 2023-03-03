@@ -1,5 +1,4 @@
 from time import sleep
-
 from scapy.all import *
 from scapy.layers.dhcp import DHCP, BOOTP
 from scapy.layers.inet import IP, UDP

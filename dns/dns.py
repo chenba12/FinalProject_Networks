@@ -1,5 +1,4 @@
 from time import sleep
-
 from scapy.layers.dns import DNSQR, DNSRR, DNS
 from scapy.layers.inet import IP, UDP
 from scapy.sendrecv import send, sniff
@@ -7,7 +6,7 @@ from scapy.sendrecv import send, sniff
 network_interface = "enp0s3"
 app_name = "mySQLApp.com"
 dns_server_ip = "192.168.1.2"
-app_server_ip = "192.168.1.3"
+app_server_ip = "10.0.2.15"
 
 
 def dns_server(pkt):

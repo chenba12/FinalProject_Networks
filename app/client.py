@@ -1,10 +1,12 @@
-import time
-
+import json
 from scapy.all import *
 from scapy.layers.dhcp import DHCP, BOOTP
 from scapy.layers.dns import DNSQR, DNS, DNSRR
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
+
+from games import json_to_game
+from message import add_game_message
 
 network_interface = "enp0s3"
 client_mac = bytes.fromhex(" ".join(["08", "00", "27", "11", "11", "11"]))
@@ -14,6 +16,8 @@ filter_port = "udp and (port 67 or 68)"
 message_types = ["discover", "request"]
 app_server_name = "mySQLApp.com"
 app_server_ip = ""
+app_Server_port = 30962
+app_client_port = 20961
 
 
 def handle_ip(pkt):
@@ -67,11 +71,24 @@ def dns_response(pkt):
             return True
 
 
+def connect_to_app_server():
+    client_socket = socket.socket()  # instantiate
+    client_socket.connect(("10.0.2.15", app_Server_port))  # connect to the server
+    request = add_game_message("Not a game", "PC", "JRPG", 0, 0.5, 2023)
+    client_socket.send(bytes(json.dumps(request.as_dict()), encoding="utf-8"))  # send message
+    data = client_socket.recv(1024)  # receive response
+    json_data = json.loads(data.decode("utf-8"))  # decode and load as JSON object
+    print("yay")
+    client_socket.close()  # close the connection
+
+
 if __name__ == '__main__':
-    send_dhcp_discover()
-    sniff(filter=filter_port, timeout=10, count=3, prn=handle_ip, iface=network_interface)
-    print("IP address assigned to client: " + client_ip)
-    print("DNS server IP: " + dns_server_ip)
-    print("----------DHCP DONE----------")
-    dns_packet_handle()
-    sniff(filter=f"udp port 53 and src {dns_server_ip}", prn=dns_response, timeout=10, count=1)
+    # send_dhcp_discover()
+    # sniff(filter=filter_port, timeout=10, count=3, prn=handle_ip, iface=network_interface)
+    # print("IP address assigned to client: " + client_ip)
+    # print("DNS server IP: " + dns_server_ip)
+    # print("----------DHCP DONE----------")
+    # dns_packet_handle()
+    # sniff(filter=f"udp port 53 and src {dns_server_ip}", prn=dns_response, timeout=10, count=1)
+    # print("----------DNS DONE----------")
+    connect_to_app_server()

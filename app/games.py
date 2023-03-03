@@ -1,10 +1,5 @@
-import json
-
 import sqlalchemy as sa
-import datetime
 from sqlalchemy.ext.declarative import declarative_base
-
-from enum import Enum
 
 Base = declarative_base()
 
@@ -17,8 +12,8 @@ class Game(Base):
     name = sa.Column('name', sa.String, nullable=False, unique=True)
     platform = sa.Column('platform', sa.String, nullable=False)
     category = sa.Column('category', sa.String, nullable=False)
-    price = sa.Column('price', sa.Double, nullable=False)
-    score = sa.Column('score', sa.Double, nullable=False)
+    price = sa.Column('price', sa.Float, nullable=False)
+    score = sa.Column('score', sa.Float, nullable=False)
     release_year = sa.Column(sa.Integer, default=1970)
 
     def __str__(self):
@@ -52,7 +47,8 @@ def validate_year(year):
 
 
 def validate_category(category):
-    category_list = ["JRPG", "Adventure", "Shooter", "Action", "Fighting", "Platformer", "RPG", "Survival", "Sport","MMO"]
+    category_list = ["JRPG", "Adventure", "Shooter", "Action", "Fighting", "Platformer", "RPG", "Survival", "Sport",
+                     "MMO"]
     return category in category_list
 
 

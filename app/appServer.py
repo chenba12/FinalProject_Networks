@@ -1,19 +1,22 @@
-import message
+from message import json_to_message, error_message, result_message
 from games import Game, Base, validate_platform, validate_year, validate_category, validate_score
-from sqlalchemy import create_engine, and_, literal
+from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 import socket
 import json
-import datetime
 
 HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
 PORT = 65436  # Port to listen on (non-privileged ports are > 1023)
+app_server_ip = "10.0.2.15"
+app_Server_port = 30962
+app_client_port = 20961
 
 
 def start_server() -> None:
     server_socket = socket.socket()  # get instance
-    server_socket.bind((HOST, PORT))  # bind host address and port together
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((app_server_ip, app_Server_port))  # bind host address and port together
+
     server_socket.listen(10)
     connection, address = server_socket.accept()  # accept new connection
 
@@ -24,93 +27,85 @@ def start_server() -> None:
         if not data:
             break
         request_object = json.loads(data.decode("utf-8"))
-        message_object = message.json_to_message(request_object)
+        message_object = json_to_message(request_object)
         match str(message_object.func):
             case "getAll":
                 try:
                     result = get_all()
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Game Catalog is empty")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    error_to_send = error_message("Game Catalog is empty")
+                    connection.send(bytes(json.dumps(error_to_send), encoding="utf-8"))
             case "addGame":
-                name = message_object.body['name'],
-                platform = message_object.body['platform'],
-                category = message_object.body['category'],
-                price = message_object.body['price'],
+                name = message_object.body['name']
+                platform = message_object.body['platform']
+                category = message_object.body['category']
+                price = message_object.body['price']
                 release_year = (message_object.body['release_year'])
                 score = message_object.body['score']
+                print(release_year, platform, category, score)
                 try:
                     result = add_game(name=name, category=category, platform=platform, price=price,
                                       score=score, release_year=release_year)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game parameters")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game parameters")
             case "getGameByID":
                 game_id = message_object.body['id']
                 try:
                     result = get_game_by_id(game_id)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game ID")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game ID")
             case "getGameByName":
                 game_name = message_object.body['name']
                 try:
                     result = get_game_by_name(game_name)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game name")
-                connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game name")
             case "getGameByPlatform":
                 game_name = message_object.body['platform']
                 try:
                     result = get_game_by_name(game_name)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game platform")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game platform")
             case "getGameByCategory":
                 game_category = message_object.body['category']
                 try:
                     result = get_games_by_category(game_category)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game category")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game category")
             case "deleteGame":
                 game_id = message_object.body['id']
                 try:
                     result = delete_game_by_id(game_id)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid game ID")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game ID")
             case "getGameByScore":
                 score = message_object.body['score']
                 try:
                     result = get_games_by_score(score)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid score")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game score")
             case "getGameByYear":
                 release_year = message_object.body['release_year']
                 try:
                     result = get_games_by_date(release_year)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid Year")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid game release year")
             case "getGameByPrice":
                 price = message_object.body['price']
                 try:
                     result = get_game_from_price(price)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid Price range")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid price range")
             case "getGameByPriceBetween":
                 start = message_object.body['start']
                 end = message_object.body['end']
@@ -118,16 +113,20 @@ def start_server() -> None:
                     result = get_games_between_price_points(start, end)
                     send_to_client(connection, result)
                 except ValueError:
-                    error_message = message.error_message("Invalid Price range")
-                    connection.send(bytes(json.dumps(error_message), encoding="utf-8"))
+                    send_error_to_client(connection, "Invalid price range")
             case _:
                 print("Got Invalid error")
     connection.close()  # close the connection
 
 
+def send_error_to_client(connection, message):
+    error_to_send = error_message(message)
+    connection.send(bytes(json.dumps(error_to_send.as_dict()), encoding="utf-8"))
+
+
 def send_to_client(connection, result):
-    message_to_send = message.result_message(result)
-    connection.send(bytes(json.dumps(message_to_send), encoding="utf-8"))
+    message_to_send = result_message(result)
+    connection.send(bytes(json.dumps(message_to_send.as_dict()), encoding="utf-8"))
 
 
 def setup_db() -> None:
@@ -151,6 +150,7 @@ def get_all():
 
 
 def add_game(name, platform, category, price, score, release_year):
+    print(release_year, platform, category, score)
     if (validate_year(release_year) and validate_platform(platform) and validate_category(
             category) and validate_score(score)):
         game = Game()
@@ -322,10 +322,10 @@ if __name__ == '__main__':
     setup_db()
     print("--- first_setup() ---")
     first_setup()
+    print("--- start_server() ---")
+    start_server()
     # print("--- add_game() ---")
     # add_game()
-    # print("--- start_server() ---")
-    # start_server()
     # print("--- get_all() ---")
     # games_List = get_all()
     # print(games_List)
