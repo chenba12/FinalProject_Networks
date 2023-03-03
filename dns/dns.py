@@ -1,7 +1,5 @@
 from time import sleep
 
-from scapy.all import *
-from scapy.arch import get_if_addr
 from scapy.layers.dns import DNSQR, DNSRR, DNS
 from scapy.layers.inet import IP, UDP
 from scapy.sendrecv import send, sniff
@@ -9,6 +7,7 @@ from scapy.sendrecv import send, sniff
 network_interface = "enp0s3"
 app_name = "mySQLApp.com"
 dns_server_ip = "192.168.1.2"
+app_server_ip = "192.168.1.3"
 
 
 def dns_server(pkt):
@@ -19,7 +18,7 @@ def dns_server(pkt):
         if dns_req == app_name:
             print(f"Received DNS Request from {ip_src}")
             # Respond with a DNS record for mySQLApp.com
-            dns_resp = DNSRR(rrname=dns_req, rdata='192.168.1.3')
+            dns_resp = DNSRR(rrname=dns_req, rdata=app_server_ip)
             udp = UDP(sport=53, dport=pkt[UDP].sport)
             dns = DNS(id=pkt[DNS].id, qr=1, an=dns_resp)
             ip = IP(src=dns_server_ip, dst=ip_src)
