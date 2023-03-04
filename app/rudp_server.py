@@ -4,7 +4,6 @@ import socket
 control_bits_size = 1
 seq_num_size = 4
 data_length_size = 4
-header_length = control_bits_size + seq_num_size + data_length_size
 BUFFER_SIZE = 1024
 SYN = 0b10
 SYN_ACK = 0b101
@@ -21,8 +20,6 @@ def setup():
 
     # Bind the socket to a public host and a well-known port
     server_socket.bind(('localhost', 8000))
-    buffer = []
-    last_acked = 0
     while True:
         # Receive packet
         packet, address = server_socket.recvfrom(BUFFER_SIZE)
@@ -31,23 +28,23 @@ def setup():
             # process SYN message
             print(f"Received SYN message,sequence number:{seq_num},data size:{data_size},data:{data}")
             # send SYN-ACK message here
-            server_socket.settimeout(2)
+            server_socket.settimeout(3)
             seq_num += 1
             packet = pack_data(SYN_ACK, "SYN-ACK", seq_num)
             server_socket.sendto(packet, address)
             print(f"Sent SYN-ACK with seq_num={seq_num}")
-            last_acked = seq_num
         while True:
             packet, address = server_socket.recvfrom(BUFFER_SIZE)
             control_bits, data, data_size, seq_num = unpack_data(packet)
             print(f"Received packet with seq_num={seq_num} and data={data} from {address}")
             if control_bits == DATA_PACKET:
-                seq_num += 1
+                if random.random() < 0.5:
+                    print("dropping...")
+                    continue
                 packet = pack_data(ACK, "ACK", seq_num)
                 server_socket.sendto(packet, address)
                 print(f"Sent ACK on packet with seq_num={seq_num}")
             elif control_bits == FIN:
-                seq_num += 1
                 packet = pack_data(FIN_ACK, "FIN_ACK", seq_num)
                 server_socket.sendto(packet, address)
                 print(f"Sent FIN_ACK on packet with seq_num={seq_num}")
@@ -63,10 +60,10 @@ def pack_data(control_bits, data, seq_num):
 
 
 def unpack_data(packet):
-    control_bits = int.from_bytes(packet[:control_bits_size], byteorder='big')
-    seq_num = int.from_bytes(packet[control_bits:5], byteorder='big')
-    data_size = int.from_bytes(packet[5:header_length], byteorder='big')
-    data = packet[header_length:].decode('utf-8')
+    control_bits = int.from_bytes(packet[:1], byteorder='big')
+    seq_num = int.from_bytes(packet[1:5], byteorder='big')
+    data_size = int.from_bytes(packet[5:9], byteorder='big')
+    data = packet[9:].decode('utf-8')
     return control_bits, data, data_size, seq_num
 
 
