@@ -28,7 +28,7 @@ def setup():
         print("Waiting for Clients")
         received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
         client_flag = True
-        print(f"New Client connected {client_address}")
+        print("New Client connected {ad}")
         try:
             control_bits, data, data_size, seq_num = unpack_data(received_packet)
         except ValueError:
@@ -55,6 +55,9 @@ def setup():
                 received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
             except socket.timeout:
                 print(f"Timeout: {seq_num}")
+                sent_packet = pack_data(SYN_ACK, "SYN-ACK", seq_num)
+                server_socket.sendto(sent_packet, client_address)
+                continue
             try:
                 control_bits, data, data_size, seq_num = unpack_data(received_packet)
             except ValueError:
@@ -78,7 +81,9 @@ def setup():
                         received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
                     except socket.timeout:
                         print(f"Timeout: seq_num={seq_num}")
-                        print(client_flag)
+                        sent_packet = pack_data(FIN_ACK, "FIN_ACK", seq_num)
+                        server_socket.sendto(sent_packet, client_address)
+                        print(f"Sent FIN_ACK on packet with seq_num={seq_num}")
                         continue
                     try:
                         control_bits, data, data_size, seq_num = unpack_data(received_packet)
