@@ -6,7 +6,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from games import json_to_game
-from message import add_game_message, json_to_message
+from message import add_game_message, json_to_message, get_all_message
 
 network_interface = "enp0s3"
 client_mac = bytes.fromhex(" ".join(["08", "00", "27", "11", "11", "11"]))
@@ -74,14 +74,17 @@ def dns_response(pkt):
 def connect_to_app_server():
     client_socket = socket.socket()  # instantiate
     client_socket.connect(("10.0.2.15", app_Server_port))  # connect to the server
-    request = add_game_message("Not a game", "PC", "JRPG", 0, 0.5, 2023)
+    request = get_all_message()
     client_socket.send(bytes(json.dumps(request.as_dict()), encoding="utf-8"))  # send message
-    data = client_socket.recv(1024)  # receive response
-    json_data = json.loads(data.decode("utf-8"))  # decode and load as JSON object
+    data = client_socket.recv(8000)  # receive response
+    print(data)
+    json_data = json.loads(data.decode("utf-8"))
     message_object = json_to_message(json_data)
     print(message_object.body)
-    game = json_to_game(message_object.body)
-    print(game)
+    for item in message_object.body:
+        game = json_to_game(item)
+        print(game)
+
     client_socket.close()  # close the connection
 
 

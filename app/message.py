@@ -19,7 +19,7 @@ class Message:
 
 
 def get_all_message():
-    return Message("getALl", "")
+    return Message("getAll", "")
 
 
 def add_game_message(name: str, platform: str, category: str, price: float, score: float, release_year: int) -> Message:

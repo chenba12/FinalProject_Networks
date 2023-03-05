@@ -2,16 +2,10 @@ import socket
 import sys
 import time
 import random
-from rudp_server import pack_data, unpack_data
+from rudp_server import pack_data, unpack_data, concatenate_chunks, SYN, SYN_ACK, PSH_ACK, PSH, FIN, FIN_ACK, ACK, NAK
 
 BUFFER_SIZE = 1024
-SYN = 0b10
-SYN_ACK = 0b101
-ACK = 0b01
-DATA_PACKET = 0b00
-FIN = 0b1
-FIN_ACK = 0b1001
-NAK = 0b11
+data_chunks = []
 
 
 def setup():
@@ -20,12 +14,11 @@ def setup():
     # Set the initial sequence number
     server_address = ('localhost', 8000)
     seq_num = random.randint(0, 500)
-    client_socket.settimeout(1)
+    client_socket.settimeout(2)
     sent_packet = pack_data(SYN, seq_num, 0, 0, 0, "SYN")
     client_socket.sendto(sent_packet, server_address)
     while True:
         try:
-            time.sleep(1)
             # Send the SYN message to the server
             received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
         except socket.timeout:
@@ -43,10 +36,10 @@ def setup():
             continue
         if control_bits == SYN_ACK:
             last_ack = seq_num
-            for i in range(5):
-                time.sleep(1)
+            for i in range(1):
                 seq_num += 1
-                sent_packet = pack_data(DATA_PACKET, seq_num, 0, 0, 0, f"data {i}")
+                print(f"PUSHED {i}")
+                sent_packet = pack_data(PSH, seq_num, 0, 0, 0, f"data {i}")
                 client_socket.sendto(sent_packet, server_address)
                 while True:
                     try:
@@ -60,14 +53,23 @@ def setup():
                             sent_packet = pack_data(NAK, seq_num, 0, 0, 0, "NAK")
                             client_socket.sendto(sent_packet, server_address)
                             continue
-                        if control_bits == ACK:
-                            if seq_num == last_ack + 1:
-                                last_ack = seq_num
+                        if control_bits == PSH_ACK:
+                            last_ack = seq_num
+                            data_chunks.append(data)
+                            sent_packet = pack_data(ACK, seq_num, 0, 0, 0, "")
+                            client_socket.sendto(sent_packet, server_address)
+                            print(f"THE CHUNK IS {chunk_num} last? {last_chunk}")
+                            if last_chunk == 1 and len(data_chunks) == chunk_num:
+                                print("GOT THE FULL DATA")
+                                full_data = concatenate_chunks(data_chunks)
+                                print(full_data)
                                 break
+
                     except socket.timeout:
-                        print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
-                        sent_packet = pack_data(DATA_PACKET, last_ack + 1, 0, 0, 0, f"data {i}")
-                        client_socket.sendto(sent_packet, server_address)
+                        print("why timeout?")
+                        # print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
+                        # sent_packet = pack_data(PSH, last_ack + 1, 0, 0, 0, f"data {i}")
+                        # client_socket.sendto(sent_packet, server_address)
 
             while True:
                 print("----Sent all 5 packets ----")

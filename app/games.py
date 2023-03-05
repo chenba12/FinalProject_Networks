@@ -8,7 +8,7 @@ class Game(Base):
     __tablename__ = 'Games'
 
     # name id score platform category price release date
-    id = sa.Column('Id', sa.Integer, primary_key=True, autoincrement=True)
+    id = sa.Column('id', sa.Integer, primary_key=True, autoincrement=True)
     name = sa.Column('name', sa.String, nullable=False, unique=True)
     platform = sa.Column('platform', sa.String, nullable=False)
     category = sa.Column('category', sa.String, nullable=False)
@@ -33,7 +33,7 @@ class Game(Base):
 
 
 def json_to_game(json_object):
-    return Game(id=json_object['id'],
+    return Game(id=int(json_object['id']),
                 name=json_object['name'],
                 platform=json_object['platform'],
                 category=json_object['category'],
