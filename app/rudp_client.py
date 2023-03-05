@@ -65,11 +65,11 @@ def setup():
                             print(f"ACK Received for packet {i} with seq={seq_num}")
                             if seq_num == last_ack + 1:
                                 last_ack = seq_num
-                            break
+                                break
                     except socket.timeout:
                         print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
                         print("Resending...")
-                        sent_packet = pack_data(DATA_PACKET, f"data +{i}", last_ack + 1)
+                        sent_packet = pack_data(DATA_PACKET, f"data {i}", last_ack + 1)
                         client_socket.sendto(sent_packet, server_address)
 
             while True:
