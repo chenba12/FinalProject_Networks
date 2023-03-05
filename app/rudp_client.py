@@ -4,10 +4,11 @@ import time
 import random
 from rudp_server import pack_data, unpack_data
 
+BUFFER_SIZE = 1024
 SYN = 0b10
 SYN_ACK = 0b101
-DATA_PACKET = 0b00
 ACK = 0b01
+DATA_PACKET = 0b00
 FIN = 0b1
 FIN_ACK = 0b1001
 NAK = 0b11
@@ -20,81 +21,77 @@ def setup():
     server_address = ('localhost', 8000)
     seq_num = random.randint(0, 500)
     client_socket.settimeout(1)
-    last_control = SYN
-    sent_packet = pack_data(SYN, "SYN", seq_num)
+    sent_packet = pack_data(SYN, seq_num, 0, 0, 0, "SYN")
     client_socket.sendto(sent_packet, server_address)
-    print(f"Sent SYN message seq_number {seq_num}")
     while True:
         try:
+            time.sleep(1)
             # Send the SYN message to the server
-            received_packet, address = client_socket.recvfrom(1024)
+            received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
         except socket.timeout:
             print("Timeout Didn't receive SYN-ACK")
-            sent_packet = pack_data(SYN, "SYN", seq_num)
+            sent_packet = pack_data(SYN, seq_num, 0, 0, 0, "SYN")
             client_socket.sendto(sent_packet, server_address)
-            print(f"Sent SYN message seq_number {seq_num}")
             continue
         try:
-            control_bits, data, data_size, seq_num = unpack_data(received_packet)
+            control_bits, data, data_size, seq_num, chunk_num, retransmission, last_chunk = unpack_data(
+                received_packet)
         except ValueError:
             print(f"Got bad check_sum seq_num={seq_num}")
-            sent_packet = pack_data(NAK, "NAK", seq_num)
+            sent_packet = pack_data(NAK, seq_num, 0, 0, 0, "NAK")
             client_socket.sendto(sent_packet, server_address)
             continue
         if control_bits == SYN_ACK:
-            print(f"Received SYN-ACK with seq_num={seq_num} and data={data} from server")
             last_ack = seq_num
             for i in range(5):
                 time.sleep(1)
                 seq_num += 1
-                print(f"Sending packet {i} with seq={seq_num}")
-                sent_packet = pack_data(DATA_PACKET, f"data {i}", seq_num)
+                sent_packet = pack_data(DATA_PACKET, seq_num, 0, 0, 0, f"data {i}")
                 client_socket.sendto(sent_packet, server_address)
                 while True:
                     try:
                         print(f"Waiting for ACK on packet {i} with seq={last_ack + 1}...")
-                        received_packet, address = client_socket.recvfrom(1024)
+                        received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
                         try:
-                            control_bits, data, data_size, seq_num = unpack_data(received_packet)
+                            control_bits, data, data_size, seq_num, chunk_num, retransmission, last_chunk = unpack_data(
+                                received_packet)
                         except ValueError:
                             print(f"Got bad check_sum seq_num={seq_num}")
-                            sent_packet = pack_data(NAK, "NAK", seq_num)
+                            sent_packet = pack_data(NAK, seq_num, 0, 0, 0, "NAK")
                             client_socket.sendto(sent_packet, server_address)
                             continue
                         if control_bits == ACK:
-                            print(f"ACK Received for packet {i} with seq={seq_num}")
                             if seq_num == last_ack + 1:
                                 last_ack = seq_num
                                 break
                     except socket.timeout:
                         print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
-                        print("Resending...")
-                        sent_packet = pack_data(DATA_PACKET, f"data {i}", last_ack + 1)
+                        sent_packet = pack_data(DATA_PACKET, last_ack + 1, 0, 0, 0, f"data {i}")
                         client_socket.sendto(sent_packet, server_address)
 
             while True:
                 print("----Sent all 5 packets ----")
                 print("closing...")
                 seq_num += 1
-                sent_packet = pack_data(FIN, f"FIN", seq_num)
+                sent_packet = pack_data(FIN, seq_num, 0, 0, 0, f"FIN")
                 client_socket.sendto(sent_packet, server_address)
-                print(f"Sent FIN message seq_number {seq_num}")
                 try:
-                    received_packet, address = client_socket.recvfrom(1024)
+                    received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
                 except socket.timeout:
                     print("Didnt receive FIN-ACK resending...")
-                    sent_packet = pack_data(FIN, f"FIN", seq_num)
+                    sent_packet = pack_data(FIN, seq_num, 0, 0, 0, f"FIN")
                     client_socket.sendto(sent_packet, server_address)
                 try:
-                    control_bits, data, data_size, seq_num = unpack_data(received_packet)
+                    control_bits, data, data_size, seq_num, chunk_num, retransmission, last_chunk = unpack_data(
+                        received_packet)
                 except ValueError:
                     print(f"Got bad check_sum seq_num={seq_num}")
-                    sent_packet = pack_data(NAK, "NAK", seq_num)
+                    sent_packet = pack_data(NAK, seq_num, 0, 0, 0, "NAK")
                     client_socket.sendto(sent_packet, server_address)
                     continue
                 if control_bits == FIN_ACK:
                     print("Got FIN_ACK closing...")
-                    sent_packet = pack_data(FIN_ACK, f"FIN_ACK", seq_num)
+                    sent_packet = pack_data(FIN_ACK, seq_num, 0, 0, 0, f"FIN_ACK")
                     client_socket.sendto(sent_packet, server_address)
                     client_socket.close()
                     sys.exit(1)
