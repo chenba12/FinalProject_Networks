@@ -11,7 +11,7 @@ received_counter = 0
 time_out = 2
 
 
-def setup():
+def connect_to_server():
     global buffer_size, received_counter, time_out
 
     # Create a socket object
@@ -139,4 +139,4 @@ def reset_timeout(client_socket):
 
 
 if __name__ == '__main__':
-    setup()
+    connect_to_server()

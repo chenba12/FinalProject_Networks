@@ -23,7 +23,7 @@ received_counter = 0
 # header
 # | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | total_chunk (4 bytes) | chunk_num (4 bytes)
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
-def setup():
+def server_start():
     global buffer_size, time_out, received_counter
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -286,4 +286,4 @@ def reset_timeout(server_socket):
 
 
 if __name__ == '__main__':
-    setup()
+    server_start()
