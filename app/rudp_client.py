@@ -66,6 +66,7 @@ def setup():
                                 break
 
                     except socket.timeout:
+                        # TODO handle timeout
                         print("why timeout?")
                         # print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
                         # sent_packet = pack_data(PSH, last_ack + 1, 0, 0, 0, f"data {i}")

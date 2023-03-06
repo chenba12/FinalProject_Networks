@@ -17,7 +17,8 @@ class Game(Base):
     release_year = sa.Column(sa.Integer, default=1970)
 
     def __str__(self):
-        return f'<Game {self.id} ({self.name} {self.platform} {self.category}) {self.price} {self.score} {self.release_year}>'
+        return f'<{self.id} Title:{self.name} Platform:{self.platform} Category:{self.category} ' \
+               f'Price:${self.price} Score:{self.score}/100 Release date:{self.release_year}>'
 
     def as_dict(self):
         return {

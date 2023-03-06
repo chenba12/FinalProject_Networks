@@ -19,7 +19,6 @@ current_packet = []
 # header
 # | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | chunk_num (4 bytes)
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
-
 def setup():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -97,7 +96,7 @@ def handle(client_address, control_bits, data_size, seq_num, chunk_num, retransm
                     last_chunk = 0
                 time.sleep(1)
 
-                sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, chunk_num=size, retransmission=0,
+                sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, chunk_num=size - i, retransmission=0,
                                         last_chunk=last_chunk,
                                         data=chunk)
                 server_socket.sendto(sent_packet, client_address)
