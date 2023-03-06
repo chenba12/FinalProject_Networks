@@ -36,6 +36,19 @@ def add_game_message(name: str, platform: str, category: str, price: float, scor
     })
 
 
+def update_game_message(game_id: int, name: str, platform: str, category: str, price: float, score: float,
+                        release_year: int) -> Message:
+    return Message("updateGame", {
+        'id': game_id,
+        'name': name,
+        'platform': platform,
+        'category': category,
+        'price': price,
+        'score': score,
+        'release_year': release_year
+    })
+
+
 def get_game_by_id_message(game_id: int) -> Message:
     return Message("getGameByID", {
         'id': game_id

@@ -1,5 +1,5 @@
 from message import json_to_message, error_message, result_message
-from games import Game, Base, validate_platform, validate_year, validate_category, validate_score
+from games import Game, Base, validate_platform, validate_year, validate_category, validate_score, json_to_game
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 import socket
@@ -45,13 +45,13 @@ def handle_request(connection, message_object) -> None:
                 error_to_send = error_message("Game Catalog is empty")
                 connection.send(bytes(json.dumps(error_to_send), encoding="utf-8"))
         case "addGame":
+            print("----------SQL Add Game----------")
             name = message_object.body['name']
             platform = message_object.body['platform']
             category = message_object.body['category']
             price = message_object.body['price']
             release_year = (message_object.body['release_year'])
             score = message_object.body['score']
-            print(release_year, platform, category, score)
             try:
                 result = add_game(name=name, category=category, platform=platform, price=price,
                                   score=score, release_year=release_year)
@@ -59,6 +59,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game parameters")
         case "getGameByID":
+            print("----------SQL Get Game By ID----------")
             game_id = message_object.body['id']
             try:
                 result = get_game_by_id(game_id)
@@ -66,6 +67,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game ID")
         case "getGameByName":
+            print("----------SQL Get Game By Name----------")
             game_name = message_object.body['name']
             try:
                 result = get_game_by_name(game_name)
@@ -73,13 +75,15 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game name")
         case "getGameByPlatform":
-            game_name = message_object.body['platform']
+            print("----------SQL Get Games By Platform----------")
+            game_platform = message_object.body['platform']
             try:
-                result = get_game_by_name(game_name)
+                result = get_games_by_platform(game_platform)
                 send_to_client(connection, result)
             except ValueError:
                 send_error_to_client(connection, "Invalid game platform")
         case "getGameByCategory":
+            print("----------SQL Get Games By Category----------")
             game_category = message_object.body['category']
             try:
                 result = get_games_by_category(game_category)
@@ -87,6 +91,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game category")
         case "deleteGame":
+            print("----------SQL Delete Game----------")
             game_id = message_object.body['id']
             try:
                 result = delete_game_by_id(game_id)
@@ -94,6 +99,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game ID")
         case "getGameByScore":
+            print("----------SQL Get Games By Score----------")
             score = message_object.body['score']
             try:
                 result = get_games_by_score(score)
@@ -101,6 +107,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game score")
         case "getGameByYear":
+            print("----------SQL Get Games By Year----------")
             release_year = message_object.body['release_year']
             try:
                 result = get_games_by_date(release_year)
@@ -108,6 +115,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid game release year")
         case "getGameByPrice":
+            print("----------SQL Get Games By Price----------")
             price = message_object.body['price']
             try:
                 result = get_game_from_price(price)
@@ -115,6 +123,7 @@ def handle_request(connection, message_object) -> None:
             except ValueError:
                 send_error_to_client(connection, "Invalid price range")
         case "getGameByPriceBetween":
+            print("----------SQL Get Games By Price range----------")
             start = message_object.body['start']
             end = message_object.body['end']
             try:
@@ -122,6 +131,17 @@ def handle_request(connection, message_object) -> None:
                 send_to_client(connection, result)
             except ValueError:
                 send_error_to_client(connection, "Invalid price range")
+        case "updateGame":
+            print("----------SQL Update Game----------")
+            game_id = message_object.body['id']
+            name = message_object.body['name']
+            platform = message_object.body['platform']
+            category = message_object.body['category']
+            price = message_object.body['price']
+            release_year = (message_object.body['release_year'])
+            score = message_object.body['score']
+            update_game(category, connection, game_id, name, platform, price, release_year, score)
+
         case _:
             print("Got Invalid error")
 
@@ -185,7 +205,7 @@ def delete_game_by_id(game_id) -> str:
     else:
         print(f'Deleting....')
         db_session.delete(result)
-        return "Success"
+        return get_all()
 
 
 def get_game_by_id(game_id) -> [Game]:
@@ -275,7 +295,7 @@ def get_games_by_date(release_year) -> [Game]:
 
 def get_games_by_score(score) -> [Game]:
     validate_score(score)
-    result = db_session.query(Game).filter(Game.score == score).all()
+    result = db_session.query(Game).filter(Game.score >= score).all()
     if result is not None:
         send = []
         for game in result:
@@ -284,6 +304,19 @@ def get_games_by_score(score) -> [Game]:
             raise ValueError(f"No games with score: {score}")
         else:
             return send
+
+
+def update_game(category, connection, game_id, name, platform, price, release_year, score):
+    result = db_session.query(Game).filter(Game.id == game_id).first()
+    if result is not None or result is not []:
+        result.name = name
+        result.platform = platform
+        result.category = category
+        result.price = price
+        result.release_year = release_year
+        result.score = score
+        db_session.commit()
+        send_to_client(connection, [result.to_json()])
 
 
 def delete_all() -> None:
