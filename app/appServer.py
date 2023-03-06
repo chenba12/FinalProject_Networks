@@ -5,17 +5,18 @@ from sqlalchemy.orm import sessionmaker
 import socket
 import json
 
-HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
-PORT = 65436  # Port to listen on (non-privileged ports are > 1023)
-app_server_ip = "10.0.2.15"
-app_Server_port = 30962
-app_client_port = 20961
+#TCP SERVER
+
+# constants
+APP_SERVER_IP = "10.0.2.15"
+APP_SERVER_PORT = 30962
+APP_CLIENT_PORT = 20961
 
 
 def start_server() -> None:
     server_socket = socket.socket()  # get instance
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((app_server_ip, app_Server_port))  # bind host address and port together
+    server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))  # bind host address and port together
 
     server_socket.listen(10)
     connection, address = server_socket.accept()  # accept new connection
@@ -121,12 +122,12 @@ def start_server() -> None:
 
 def send_error_to_client(connection, message):
     error_to_send = error_message(message)
-    connection.send(bytes(json.dumps(error_to_send.as_dict()), encoding="utf-8"))
+    connection.send(bytes(json.dumps(error_to_send.to_json()), encoding="utf-8"))
 
 
 def send_to_client(connection, result):
     message_to_send = result_message(result)
-    connection.send(bytes(json.dumps(message_to_send.as_dict()), encoding="utf-8"))
+    connection.send(bytes(json.dumps(message_to_send.to_json()), encoding="utf-8"))
 
 
 def setup_db() -> None:
@@ -142,7 +143,7 @@ def get_all():
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError("The Table is Empty")
         else:
@@ -184,7 +185,7 @@ def get_game_by_id(game_id):
     if result is None:
         raise ValueError(f"No game with id {game_id} found")
     else:
-        return result.as_dict()
+        return result.to_json()
 
 
 def get_game_by_name(name):
@@ -192,7 +193,7 @@ def get_game_by_name(name):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError("No game found with that name")
         else:
@@ -204,7 +205,7 @@ def get_game_from_price(price):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError(f"No games with price greater or equal to {price}")
         else:
@@ -216,7 +217,7 @@ def get_games_by_category(category):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError(f"No games from category: {category}")
         else:
@@ -229,7 +230,7 @@ def get_games_by_platform(platform):
         if result is not None:
             send = []
             for game in result:
-                send.append(game.as_dict())
+                send.append(game.to_json())
             if not send:
                 raise ValueError(f"No games from platform: {platform}")
             else:
@@ -244,7 +245,7 @@ def get_games_between_price_points(start, end):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError(f"No games with price range from {start} to {end}")
         else:
@@ -257,7 +258,7 @@ def get_games_by_date(release_year):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError(f"No games from year: {release_year}")
         else:
@@ -270,7 +271,7 @@ def get_games_by_score(score):
     if result is not None:
         send = []
         for game in result:
-            send.append(game.as_dict())
+            send.append(game.to_json())
         if not send:
             raise ValueError(f"No games with score: {score}")
         else:

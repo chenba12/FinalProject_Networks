@@ -2,27 +2,31 @@ import socket
 import sys
 import time
 import random
-from rudp_server import pack_data, unpack_data, concatenate_chunks, SYN, SYN_ACK, PSH_ACK, PSH, FIN, FIN_ACK, ACK, NAK
+from rudp_server import pack_data, unpack_data, concatenate_chunks, SYN, SYN_ACK, PSH_ACK, PSH, FIN, FIN_ACK, ACK, NAK, \
+    BUFFER_SIZE
 
-BUFFER_SIZE = 1024
+# constants
 data_chunks = []
 
 
 def setup():
+    time_out = 2
     # Create a socket object
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # Set the initial sequence number
     server_address = ('localhost', 8000)
-    seq_num = random.randint(0, 500)
-    client_socket.settimeout(2)
+    seq_num = random.randint(0, 1000)
+    client_socket.settimeout(time_out)
     sent_packet = pack_data(SYN, seq_num, 0, 0, 0, "SYN")
     client_socket.sendto(sent_packet, server_address)
+    BUFFER_SIZE =5
     while True:
         try:
             # Send the SYN message to the server
             received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
         except socket.timeout:
             print("Timeout Didn't receive SYN-ACK")
+            time_out += 1
             sent_packet = pack_data(SYN, seq_num, 0, 0, 0, "SYN")
             client_socket.sendto(sent_packet, server_address)
             continue
@@ -38,12 +42,11 @@ def setup():
             last_ack = seq_num
             for i in range(1):
                 seq_num += 1
-                print(f"PUSHED {i}")
                 sent_packet = pack_data(PSH, seq_num, 0, 0, 0, f"data {i}")
                 client_socket.sendto(sent_packet, server_address)
                 while True:
                     try:
-                        print(f"Waiting for ACK on packet {i} with seq={last_ack + 1}...")
+                        print(f"Waiting for ACK")
                         received_packet, address = client_socket.recvfrom(BUFFER_SIZE)
                         try:
                             control_bits, data, data_size, seq_num, chunk_num, retransmission, last_chunk = unpack_data(
@@ -68,6 +71,7 @@ def setup():
                     except socket.timeout:
                         # TODO handle timeout
                         print("why timeout?")
+                        time_out += 1
                         # print(f"Didn't receive ACK for packet {i} with seq={seq_num}")
                         # sent_packet = pack_data(PSH, last_ack + 1, 0, 0, 0, f"data {i}")
                         # client_socket.sendto(sent_packet, server_address)

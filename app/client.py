@@ -75,7 +75,7 @@ def connect_to_app_server():
     client_socket = socket.socket()  # instantiate
     client_socket.connect(("10.0.2.15", app_Server_port))  # connect to the server
     request = get_all_message()
-    client_socket.send(bytes(json.dumps(request.as_dict()), encoding="utf-8"))  # send message
+    client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
     data = client_socket.recv(8000)  # receive response
     print(data)
     json_data = json.loads(data.decode("utf-8"))

@@ -1,26 +1,34 @@
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 
+# This file have all the methods related to the Game class
+# The class is used as an ORM (Object-relation mapping)
+# Before connecting to the database with SQLlite driver the code validate some fields
+# and only then it will get/insert/update/delete data
+# sqlalchemy is the library used to connect to the database and transfer data
+# Table "Games"
+# each row in the table is built in the following way
+# | id | name(str) | platform(str) | category(str) | price(float) | score(float) | release year(int) |
+# The data transfer between the client and server will happen over TCP/RUDP, and we will use json as the data format
 Base = declarative_base()
 
 
 class Game(Base):
     __tablename__ = 'Games'
 
-    # name id score platform category price release date
     id = sa.Column('id', sa.Integer, primary_key=True, autoincrement=True)
     name = sa.Column('name', sa.String, nullable=False, unique=True)
     platform = sa.Column('platform', sa.String, nullable=False)
     category = sa.Column('category', sa.String, nullable=False)
     price = sa.Column('price', sa.Float, nullable=False)
     score = sa.Column('score', sa.Float, nullable=False)
-    release_year = sa.Column(sa.Integer, default=1970)
+    release_year = sa.Column('release year', sa.Integer, default=1970)
 
     def __str__(self):
         return f'<{self.id} Title:{self.name} Platform:{self.platform} Category:{self.category} ' \
                f'Price:${self.price} Score:{self.score}/100 Release date:{self.release_year}>'
 
-    def as_dict(self):
+    def to_json(self):
         return {
             'id': self.id,
             'name': self.name,

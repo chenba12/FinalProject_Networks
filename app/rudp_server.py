@@ -4,7 +4,8 @@ import hashlib
 import threading
 import time
 
-BUFFER_SIZE = 1024
+# constants
+buffer_size = 1024
 SYN = 0b00000010
 SYN_ACK = 0b00000100
 ACK = 0b00000001
@@ -15,12 +16,14 @@ FIN_ACK = 0b00001001
 NAK = 0b00000011
 client_list = []
 current_packet = []
+timeout = 3
 
 
 # header
 # | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | chunk_num (4 bytes)
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
 def setup():
+    global buffer_size
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind(('localhost', 8000))
@@ -28,7 +31,7 @@ def setup():
     while True:
         # Receive packet
         try:
-            received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
+            received_packet, client_address = server_socket.recvfrom(buffer_size)
         except socket.timeout:
             # TODO handle timeout
             pass
@@ -59,7 +62,7 @@ def handle(client_address, control_bits, data_size, seq_num, chunk_num, retransm
            server_socket):
     client_flag = True
     if control_bits == SYN:
-        server_socket.settimeout(3)
+        server_socket.settimeout(timeout)
         seq_num += 1
         sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, "SYN-ACK")
         server_socket.sendto(sent_packet, client_address)
@@ -69,7 +72,7 @@ def handle(client_address, control_bits, data_size, seq_num, chunk_num, retransm
         server_socket.sendto(sent_packet, client_address)
     while client_flag:
         try:
-            received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
+            received_packet, client_address = server_socket.recvfrom(buffer_size)
         except socket.timeout:
             print(f"Timeout: {seq_num}")
             sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, "SYN-ACK")
@@ -104,7 +107,7 @@ def handle(client_address, control_bits, data_size, seq_num, chunk_num, retransm
                 waiting_for_ack = True
                 while waiting_for_ack:
                     try:
-                        received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
+                        received_packet, client_address = server_socket.recvfrom(buffer_size)
                     except socket.timeout:
                         sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, chunk_num=size, retransmission=0,
                                                 last_chunk=last_chunk,
@@ -128,7 +131,7 @@ def handle(client_address, control_bits, data_size, seq_num, chunk_num, retransm
                                         data="FIN_ACK")
                 server_socket.sendto(sent_packet, client_address)
                 try:
-                    received_packet, client_address = server_socket.recvfrom(BUFFER_SIZE)
+                    received_packet, client_address = server_socket.recvfrom(buffer_size)
                 except socket.timeout:
                     print(f"Timeout: seq_num={seq_num}")
                     sent_packet = pack_data(FIN_ACK, seq_num, 0, 0, 0, "FIN_ACK")
@@ -222,17 +225,26 @@ def unpack_data(packet):
 fake = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.!!!!!!!!!!!"
 
 
+def get_buffer_size():
+    return buffer_size
+
+
+def set_buffer_size(value):
+    global buffer_size
+    buffer_size += value
+
+
 def slice_data(data):
     # header size
     header_size = 19
 
     # Calculate the number of chunks
-    num_chunks = math.ceil(len(data) / (BUFFER_SIZE - header_size))
+    num_chunks = math.ceil(len(data) / (buffer_size - header_size))
     # Slice the data into chunks
     chunks = []
     for i in range(num_chunks):
-        chunk_start = i * (BUFFER_SIZE - header_size)
-        chunk_end = (i + 1) * (BUFFER_SIZE - header_size)
+        chunk_start = i * (buffer_size - header_size)
+        chunk_end = (i + 1) * (buffer_size - header_size)
         chunk = data[chunk_start:chunk_end]
         chunks.append(chunk)
     return chunks

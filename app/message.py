@@ -1,7 +1,5 @@
-def json_to_message(json_object):
-    return Message(func=json_object['func'],
-                   body=json_object['body'])
-
+# This file have all the methods related to the Message class
+# Used to send message between the SQL server and the client over TCP/RUDP connection
 
 class Message:
     func = ""
@@ -11,14 +9,19 @@ class Message:
         self.func = func
         self.body = body
 
-    def as_dict(self):
+    def to_json(self):
         return {
             'func': self.func,
             'body': self.body
         }
 
 
-def get_all_message():
+def json_to_message(json_object) -> Message:
+    return Message(func=json_object['func'],
+                   body=json_object['body'])
+
+
+def get_all_message() -> Message:
     return Message("getAll", "")
 
 
