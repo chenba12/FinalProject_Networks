@@ -1,3 +1,4 @@
+import math
 import socket
 import hashlib
 import threading
@@ -222,10 +223,17 @@ fake = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod 
 
 
 def slice_data(data):
-    num_chunks = (len(data) + BUFFER_SIZE - 1) // BUFFER_SIZE
+    # header size
+    header_size = 19
+
+    # Calculate the number of chunks
+    num_chunks = math.ceil(len(data) / (BUFFER_SIZE - header_size))
+    # Slice the data into chunks
     chunks = []
     for i in range(num_chunks):
-        chunk = data[i * BUFFER_SIZE: (i + 1) * BUFFER_SIZE]
+        chunk_start = i * (BUFFER_SIZE - header_size)
+        chunk_end = (i + 1) * (BUFFER_SIZE - header_size)
+        chunk = data[chunk_start:chunk_end]
         chunks.append(chunk)
     return chunks
 

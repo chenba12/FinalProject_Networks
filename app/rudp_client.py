@@ -60,9 +60,9 @@ def setup():
                             client_socket.sendto(sent_packet, server_address)
                             print(f"THE CHUNK IS {chunk_num} last? {last_chunk}")
                             if last_chunk == 1 and len(data_chunks) == chunk_num:
-                                print("GOT THE FULL DATA")
                                 full_data = concatenate_chunks(data_chunks)
                                 print(full_data)
+                                data_chunks.clear()
                                 break
 
                     except socket.timeout:
