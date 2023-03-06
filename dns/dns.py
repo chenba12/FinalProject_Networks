@@ -13,7 +13,7 @@ dns_server_ip = "192.168.1.2"
 app_server_ip = "10.0.2.15"
 
 
-def dns_server(packet):
+def dns_server(packet) -> None:
     if packet.haslayer(DNSQR):
         # Delay
         sleep(1)

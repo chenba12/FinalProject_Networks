@@ -66,7 +66,7 @@ def delete_game_message(game_id: int) -> Message:
     })
 
 
-def get_game_by_score_message(score: int) -> Message:
+def get_game_by_score_message(score: float) -> Message:
     return Message("getGameByScore", {
         'score': score
     })
@@ -78,13 +78,13 @@ def get_game_by_year_message(release_year: int) -> Message:
     })
 
 
-def get_game_by_price_message(price: int) -> Message:
+def get_game_by_price_message(price: float) -> Message:
     return Message("getGameByPrice", {
         'price': price
     })
 
 
-def get_game_by_price_between_message(start: int, end: int) -> Message:
+def get_game_by_price_between_message(start: float, end: float) -> Message:
     return Message("getGameByPriceBetween", {
         'start': start,
         'end': end

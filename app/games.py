@@ -41,7 +41,7 @@ class Game(Base):
         }
 
 
-def json_to_game(json_object):
+def json_to_game(json_object) -> Game:
     return Game(id=int(json_object['id']),
                 name=json_object['name'],
                 platform=json_object['platform'],
@@ -51,20 +51,20 @@ def json_to_game(json_object):
                 release_year=(json_object['release_year']))
 
 
-def validate_year(year):
+def validate_year(year: int) -> bool:
     return 1970 <= year <= 2030
 
 
-def validate_category(category):
+def validate_category(category: str) -> bool:
     category_list = ["JRPG", "Adventure", "Shooter", "Action", "Fighting", "Platformer", "RPG", "Survival", "Sport",
                      "MMO"]
     return category in category_list
 
 
-def validate_platform(platform):
-    platform_list = ["Switch", "PC", "Playstation5", "Playstation4"]
+def validate_platform(platform: str) -> bool:
+    platform_list = ["Switch", "PC", "Playstation5", "Playstation4", "Xbox series S"]
     return platform in platform_list
 
 
-def validate_score(score):
+def validate_score(score: float) -> bool:
     return 0 <= score <= 100

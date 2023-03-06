@@ -37,7 +37,7 @@ def generate_client_ip():
 
 # The DHCP handle method
 def handle_dhcp(pkt):
-    global client_ip, client_mac
+    global client_mac
     sleep(1)
     client_mac = pkt[Ether].src
     xid = pkt[BOOTP].xid
@@ -51,7 +51,7 @@ def handle_dhcp(pkt):
 
 
 # handle sending DHCP ACK after a DHCP request is received from the client
-def send_dhcp_ack(c_ip, c_mac, pkt, xid):
+def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
     print(f"----------Received DHCP Request from {c_mac}----------")
     dhcp_ack = Ether(dst=pkt[Ether].src) / IP(src=server_ip, dst="255.255.255.255") / UDP(sport=67,
                                                                                           dport=68) / BOOTP(
@@ -65,7 +65,7 @@ def send_dhcp_ack(c_ip, c_mac, pkt, xid):
 
 
 # handle sending DHCP Offer after a DHCP discover is received from the client
-def send_dhcp_offer(c_mac, server_mac, xid):
+def send_dhcp_offer(c_mac, server_mac, xid) -> None:
     global client_ip
     print("----------NEW REQUEST----------")
     print(f"Received DHCP Discover from {c_mac}")
