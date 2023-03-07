@@ -1,5 +1,6 @@
 from scapy.sendrecv import sniff
 
+from app.rudp_client import udp_connect_to_server
 from tcp_client import tcp_connect_to_app_server
 from client_sender import send_dhcp_discover, filter_port, handle_ip, network_interface, client_ip, dns_server_ip, \
     dns_packet_handle, dns_response, get_client_ip, get_dns_server_ip
@@ -14,4 +15,9 @@ if __name__ == '__main__':
     sniff(filter=f"udp port 53 and src {get_dns_server_ip()}", prn=dns_response, timeout=10, count=1)
     print("----------DNS DONE----------")
     connect_to = input("Please choose connection TCP or UDP")
-    tcp_connect_to_app_server()
+    if connect_to == "TCP":
+        tcp_connect_to_app_server()
+    elif connect_to == "UDP":
+        udp_connect_to_server()
+    else:
+        print("Invalid protocol")

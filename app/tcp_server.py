@@ -138,9 +138,9 @@ def handle_request(connection, message_object) -> None:
             platform = message_object.body['platform']
             category = message_object.body['category']
             price = message_object.body['price']
-            release_year = (message_object.body['release_year'])
             score = message_object.body['score']
-            update_game(category, connection, game_id, name, platform, price, release_year, score)
+            release_year = (message_object.body['release_year'])
+            update_game(connection, game_id, name, platform, category, price, score, release_year)
         case _:
             print("Got Invalid error")
 

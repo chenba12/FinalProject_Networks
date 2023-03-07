@@ -39,7 +39,6 @@ def get_all() -> [Game]:
 
 
 def add_game(name, platform, category, price, score, release_year) -> [Game]:
-    print(release_year, platform, category, score)
     if (validate_year(release_year) and validate_platform(platform) and validate_category(
             category) and validate_score(score)):
         game = Game()
@@ -166,7 +165,7 @@ def get_games_by_score(score) -> [Game]:
             return send
 
 
-def update_game(category, connection, game_id, name, platform, price, release_year, score):
+def update_game(connection, game_id, name, platform, category, price, score, release_year):
     result = db_session.query(Game).filter(Game.id == game_id).first()
     if result is not None or result is not []:
         result.name = name
@@ -177,6 +176,19 @@ def update_game(category, connection, game_id, name, platform, price, release_ye
         result.score = score
         db_session.commit()
         send_to_client(connection, [result.to_json()])
+
+
+def udp_update_game(game_id, name, platform, category, price, score, release_year):
+    result = db_session.query(Game).filter(Game.id == game_id).first()
+    if result is not None or result is not []:
+        result.name = name
+        result.platform = platform
+        result.category = category
+        result.price = price
+        result.release_year = release_year
+        result.score = score
+        db_session.commit()
+        return [result.to_json()]
 
 
 def delete_all() -> None:

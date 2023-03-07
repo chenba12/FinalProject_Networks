@@ -15,10 +15,26 @@ class Message:
             'body': self.body
         }
 
+    def __str__(self):
+        return f"<Message fun:{self.func} body:{self.body}>"
+
 
 def json_to_message(json_object) -> Message:
     return Message(func=json_object['func'],
                    body=json_object['body'])
+
+
+def str_to_message(string) -> Message:
+    prefix1 = "fun:"
+    prefix2 = "body:"
+    prefix3 = "body:"
+    prefix4 = ">"
+    # Get substring between prefix1 and prefix2
+    func = string.split(prefix1)[1].split(prefix2)[0].strip()
+    body = string.split(prefix3)[1].split(prefix4)[0].strip()
+    print(func)
+    print(body)
+    return Message(func, body)
 
 
 def get_all_message() -> Message:
@@ -27,6 +43,7 @@ def get_all_message() -> Message:
 
 def add_game_message(name: str, platform: str, category: str, price: float, score: float, release_year: int) -> Message:
     return Message("addGame", {
+        'id': 0,
         'name': name,
         'platform': platform,
         'category': category,

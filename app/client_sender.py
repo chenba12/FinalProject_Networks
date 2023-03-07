@@ -4,6 +4,8 @@ from scapy.layers.dns import DNSQR, DNS, DNSRR
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
+from games import validate_platform, validate_category, validate_score, validate_year
+
 network_interface = "enp0s3"
 client_mac = bytes.fromhex(" ".join(["08", "00", "27", "11", "11", "11"]))
 client_ip = "0.0.0.0"
@@ -93,3 +95,78 @@ def dns_response(pkt):
             app_server_ip = pkt[DNSRR].rdata
             print(f"IP of {app_server_name}:{app_server_ip}")
             return True
+
+
+def validate_price_check(message: str = "") -> float:
+    while True:
+        try:
+            price = float(input(f"Please enter {message} price: "))
+            break
+        except ValueError:
+            print("Invalid input.")
+    return price
+
+
+def validate_id_check() -> int:
+    while True:
+        try:
+            game_id = int(input("Please enter Game id: "))
+            break
+        except ValueError:
+            print("Invalid input.")
+    return game_id
+
+
+def validate_year_check() -> int:
+    release_year = 1970
+    while True:
+        try:
+            release_year = int(input("Please enter valid year 1970<=year<=2030: "))
+        except ValueError:
+            print("Invalid input.")
+            continue
+        if not validate_year(release_year):
+            release_year = int(input("Please enter valid year 1970<=year<=2030: "))
+        else:
+            break
+    return release_year
+
+
+def validate_score_check() -> float:
+    score = 0
+    while True:
+        try:
+            score = float(input("Please valid score 0<=score<=100: "))
+        except ValueError:
+            print("Invalid input.")
+            continue
+        if not validate_score(score):
+            score = float(input("Please valid score 0<=score<=100: "))
+        else:
+            break
+    return score
+
+
+def validate_category_check() -> str:
+    category = input(
+        "JRPG, Adventure, Shooter, Action, Fighting, Platformer, RPG, Survival, Sport, MMO: ")
+    while True:
+        if not validate_category(category):
+            print("Please enter a valid category")
+            category = input(
+                "JRPG, Adventure, Shooter, Action, Fighting, Platformer, RPG, Survival, Sport, MMO: ")
+        else:
+            break
+    return category
+
+
+def validate_platform_check() -> str:
+    print("Please enter a platform:")
+    platforms = input("Switch, PC, Playstation5, Playstation4, Xbox series S: ")
+    while True:
+        if not validate_platform(platforms):
+            print("Please enter a valid platform")
+            platforms = input("Switch, PC, Playstation5, Playstation4, Xbox series S: ")
+        else:
+            break
+    return platforms
