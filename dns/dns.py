@@ -5,9 +5,7 @@ from scapy.sendrecv import send, sniff
 
 # This is the DNS server file here the client will ask for the ip of the sql app
 
-
 # constants
-network_interface = "enp0s3"
 app_name = "mySQLApp.com"
 dns_server_ip = "192.168.1.2"
 app_server_ip = "10.0.2.15"
@@ -32,4 +30,5 @@ def dns_server(packet) -> None:
 
 
 if __name__ == '__main__':
+    print(f"---------DNS server UP---------")
     pkt = sniff(filter='udp port 53', prn=dns_server)

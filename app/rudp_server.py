@@ -113,7 +113,6 @@ def handle(client_address, control_bits, seq_num, server_socket):
                                                                                              control_bits, seq_num,
                                                                                              server_socket)
         except ValueError:
-            print("am i here?")
             sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
             server_socket.sendto(sent_packet, client_address)
 
@@ -151,10 +150,8 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
                 control_bits, data_size, seq_num, total, chunk_num, \
                     retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
                 if control_bits == ACK:
-                    print("GOT ACK can send more chunks")
                     waiting_for_ack = False
             except ValueError:
-                print("inside send chunks")
                 sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
                 server_socket.sendto(sent_packet, client_address)
         i += 1
@@ -452,5 +449,5 @@ def reset_timeout(server_socket):
 if __name__ == '__main__':
     setup_db()
     first_setup()
-    print("----------TCP Server----------")
+    print("----------UDP Server----------")
     udp_server_start()

@@ -29,7 +29,6 @@ def generate_client_ip():
     ip = f"192.168.1.{random_end_point}"
     while ip in clients:
         random_end_point = random.randint(100, 255)
-        print(random_end_point)
         ip = f"192.168.1.{random_end_point}"
     clients.append(ip)
     return ip
@@ -85,4 +84,5 @@ def send_dhcp_offer(c_mac, server_mac, xid) -> None:
 
 
 if __name__ == '__main__':
+    print(f"---------DNS server UP---------")
     sniff(filter=filter_port, prn=handle_dhcp, iface=network_interface)
