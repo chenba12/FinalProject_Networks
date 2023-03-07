@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # This file have all the methods related to the Game class
 # The class is used as an ORM (Object-relation mapping)
-# Before connecting to the database with SQLlite driver the code validate some fields
+# Before connecting to the database with SQL-Lite driver the code validate some fields
 # and only then it will get/insert/update/delete data
 # sqlalchemy is the library used to connect to the database and transfer data
 # Table "Games"

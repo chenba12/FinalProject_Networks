@@ -6,8 +6,8 @@ import hashlib
 import threading
 
 from games import json_to_game
-from message import error_message, Message, json_to_message, result_message, str_to_message
-from sql_manager import get_all, add_game, send_to_client, first_setup, setup_db, send_error_to_client, get_game_by_id, \
+from message import error_message, Message, result_message, str_to_message
+from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id, \
     get_game_by_name, get_games_by_platform, get_games_by_category, delete_game_by_id, get_games_by_score, \
     get_games_by_date, get_game_from_price, get_games_between_price_points, udp_update_game
 
@@ -25,6 +25,8 @@ client_list = []
 current_packet = []
 time_out = 3
 received_counter = 0
+APP_SERVER_IP = "10.0.2.15"
+APP_SERVER_PORT = 30962
 
 
 # header
@@ -34,7 +36,7 @@ def udp_server_start():
     global buffer_size, time_out, received_counter
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind(('localhost', 8000))
+    server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
     print("Waiting for Clients")
     while True:
         # Receive packet
@@ -49,8 +51,8 @@ def udp_server_start():
         received_counter += 1
         reset_timeout(server_socket)
         try:
-            control_bits, data_size, seq_num, total, chunk_num, retransmission_flag, last_chunk_flag, data = unpack_data(
-                received_packet)
+            control_bits, data_size, seq_num, total, chunk_num, \
+                retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
         except ValueError:
             print("Sending NAK")
             seq_num = int.from_bytes(received_packet[1:5], byteorder='big')

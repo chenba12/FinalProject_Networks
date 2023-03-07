@@ -5,9 +5,12 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from games import validate_platform, validate_category, validate_score, validate_year
+import uuid
 
+# global and constants
 network_interface = "enp0s3"
-client_mac = bytes.fromhex(" ".join(["08", "00", "27", "11", "11", "11"]))
+mac = uuid.getnode()
+client_mac = ':'.join(['{:02x}'.format((mac >> i) & 0xff) for i in range(0, 48, 8)])
 client_ip = "0.0.0.0"
 dns_server_ip = ""
 filter_port = "udp and (port 67 or 68)"
@@ -45,10 +48,12 @@ def handle_ip(pkt):
         print("---------Offer Received---------")
         print(f"from {pkt[Ether].src}")
         ip = pkt[BOOTP].yiaddr
-        mac = pkt[Ether].src
-        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=client_ip, dst="255.255.255.255") / UDP(sport=68,
-                                                                                                       dport=67) / BOOTP(
-            op=1, chaddr=mac) / DHCP(
+        mac_ = pkt[Ether].src
+        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff")
+        IP(src=client_ip, dst="255.255.255.255")
+        UDP(sport=68, dport=67) \
+        / BOOTP(
+            op=1, chaddr=mac_) / DHCP(
             options=[("message-type", message_types[1]), ("requested_addr", ip), ("server_id", pkt[IP].src), "end"])
         sendp(dhcp_request)
         print(f"Sent DHCP Request to {pkt[IP].src}")

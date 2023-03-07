@@ -1,12 +1,10 @@
-import json
 import socket
 import sys
 import random
 
 from client_sender import validate_platform_check, validate_category_check, validate_price_check, \
     validate_score_check, validate_year_check, validate_id_check
-from games import json_to_game
-from message import get_all_message, json_to_message, add_game_message, get_game_by_id_message, \
+from message import get_all_message, add_game_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
     update_game_message, Message
@@ -286,6 +284,6 @@ def reset_timeout(client_socket):
         time_out = 2
         client_socket.settimeout(time_out)
 
-
-if __name__ == '__main__':
-    udp_connect_to_server()
+# for tests
+# if __name__ == '__main__':
+#     udp_connect_to_server()

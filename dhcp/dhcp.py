@@ -79,7 +79,7 @@ def send_dhcp_offer(c_mac, server_mac, xid) -> None:
                                ('router', server_ip),
                                ('domain', dns_name),
                                ('name_server', dns_server_ip),
-                               ('end')])
+                               'end'])
     sendp(dhcp_offer)
     print(f"----------Sent DHCP Offer to {c_mac}----------")
 

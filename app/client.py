@@ -2,7 +2,7 @@ from scapy.sendrecv import sniff
 
 from app.rudp_client import udp_connect_to_server
 from tcp_client import tcp_connect_to_app_server
-from client_sender import send_dhcp_discover, filter_port, handle_ip, network_interface, client_ip, dns_server_ip, \
+from client_sender import send_dhcp_discover, filter_port, handle_ip, network_interface, \
     dns_packet_handle, dns_response, get_client_ip, get_dns_server_ip
 
 if __name__ == '__main__':

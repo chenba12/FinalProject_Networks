@@ -3,7 +3,7 @@ import socket
 
 from client_sender import get_app_server_ip, get_app_server_port, validate_id_check, validate_platform_check, \
     validate_category_check, validate_price_check, validate_score_check, validate_year_check
-from games import json_to_game, validate_platform, validate_category, validate_score, validate_year
+from games import json_to_game
 from message import add_game_message, json_to_message, get_all_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
