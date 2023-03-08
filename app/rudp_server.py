@@ -38,16 +38,10 @@ def udp_server_start():
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
     print("Waiting for Clients")
+    server_socket.settimeout(None)
     while True:
         # Receive packet
-        try:
-            received_packet, client_address = server_socket.recvfrom(buffer_size)
-        except socket.timeout:
-            time_out += 1
-            server_socket.settimeout(time_out)
-            received_counter = 0
-            handle_buffer()
-            continue
+        received_packet, client_address = server_socket.recvfrom(buffer_size)
         received_counter += 1
         reset_timeout(server_socket)
         try:
@@ -62,9 +56,7 @@ def udp_server_start():
         if client_address not in client_list:
             print(f"---------NEW Client: {client_address} seq_number={seq_num}---------")
             client_list.append(client_address)
-            client_thread = threading.Thread(
-                target=handle(client_address, control_bits, seq_num, server_socket))
-            client_thread.start()
+            handle(client_address, control_bits, seq_num, server_socket)
 
 
 # header
@@ -78,18 +70,14 @@ def handle(client_address, control_bits, seq_num, server_socket):
         seq_num += 1
         sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, 0, Message("SYN-ACK", ""))
         server_socket.sendto(sent_packet, client_address)
-        server_socket.settimeout(None)
-    elif control_bits == NAK:
-        print("SYN-ACK")
-        sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, 0, Message("SYN-ACK", ""))
-        server_socket.sendto(sent_packet, client_address)
+        server_socket.settimeout(time_out)
     while client_flag:
         try:
+            sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, 0, Message("SYN-ACK", ""))
+            server_socket.sendto(sent_packet, client_address)
             received_packet, client_address = server_socket.recvfrom(buffer_size)
         except socket.timeout:
             print(f"Timeout: {seq_num}")
-            sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, 0, Message("SYN-ACK", ""))
-            server_socket.sendto(sent_packet, client_address)
             time_out += 1
             server_socket.settimeout(time_out)
             received_counter = 0
@@ -102,8 +90,8 @@ def handle(client_address, control_bits, seq_num, server_socket):
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
             if control_bits == PSH:
                 print("GOT PUSH")
-                # TODO uncomment to drop packets
                 handle_psh_request(client_address, seq_num, data, server_socket)
+                # TODO uncomment to drop packets
                 # if random.random() < 0.5:
                 #     print("dropping...")
                 #     continue
@@ -146,8 +134,7 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
                 server_socket.sendto(sent_packet, client_address)
                 received_packet, client_address = server_socket.recvfrom(buffer_size)
             except socket.timeout:
-                # TODO check this
-                print(f"timeout {seq_num} :(")
+                print(f"timeout {seq_num}")
                 time_out += 1
                 server_socket.settimeout(time_out)
                 received_counter = 0
