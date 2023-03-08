@@ -193,7 +193,7 @@ def close_client_connection(client_address, client_flag, control_bits, seq_num, 
 
 
 def handle_request(client_address, seq_num, data: Message, server_socket) -> None:
-    server_socket.timeout(5)
+    server_socket.settimeout(5)
     match str(data.func):
         case "getAll":
             print("----------SQL Get All----------")
