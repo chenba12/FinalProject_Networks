@@ -6,6 +6,10 @@ from sqlalchemy.orm import sessionmaker
 import json
 
 
+# This class handles all the methods related to the sql database
+# everytime the server is opened it will delete the entire database and then write 30 games to it
+
+
 def send_error_to_client(connection, message) -> None:
     error_to_send = error_message(message)
     connection.send(bytes(json.dumps(error_to_send.to_json()), encoding="utf-8"))

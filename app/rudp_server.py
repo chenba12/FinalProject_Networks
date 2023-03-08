@@ -103,7 +103,7 @@ def handle(client_address, control_bits, seq_num, server_socket):
             if control_bits == PSH:
                 print("GOT PUSH")
                 # TODO uncomment to drop packets
-                handle_request(client_address, seq_num, data, server_socket)
+                handle_psh_request(client_address, seq_num, data, server_socket)
                 # if random.random() < 0.5:
                 #     print("dropping...")
                 #     continue
@@ -118,6 +118,15 @@ def handle(client_address, control_bits, seq_num, server_socket):
 
 
 def send_to_chunks(client_address, seq_num, result, server_socket):
+    """
+       This method handles sending the chunks of the data that fit the current buffer size to the client
+       while also waiting for ack on each of them
+       :param client_address: the client ip and port
+       :param seq_num: the current sequence number
+       :param result: the result of the SQL query
+       :param server_socket: the server socket
+       :return: the current sequence number
+       """
     global time_out, received_counter
     chunks = slice_data(result)
     size = len(chunks)
@@ -159,6 +168,18 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
 
 
 def close_client_connection(client_address, client_flag, control_bits, seq_num, server_socket):
+    """
+        end of connection flow
+        the client will send a FIN packet
+        the server will return FIN-ACK followed by FIN-ACK from the client
+        and then the collection will be closed
+       :param client_address: client address
+       :param client_flag:
+       :param control_bits: control bits represent the type of Packet that will be sent/received
+       :param seq_num: the current sequence number of the packets
+       :param server_socket: the server socket
+       :return: client_address, client_flag, control_bits, seq_num
+       """
     global time_out, received_counter
     while client_flag:
         sent_packet = pack_data(control_bits=FIN_ACK, seq_num=seq_num, total_chunks=0, chunk_num=0,
@@ -192,7 +213,15 @@ def close_client_connection(client_address, client_flag, control_bits, seq_num, 
     return client_address, client_flag, control_bits, seq_num
 
 
-def handle_request(client_address, seq_num, data: Message, server_socket) -> None:
+def handle_psh_request(client_address, seq_num, data: Message, server_socket) -> None:
+    """
+    This method handles the PSH requests get the data from the database and send it back to the user
+    :param client_address: client ip and port
+    :param seq_num: the current sequence number
+    :param data: the data received from the packet
+    :param server_socket: the server socket
+    :return: the current sequence number
+    """
     server_socket.settimeout(5)
     match str(data.func):
         case "getAll":
@@ -334,6 +363,17 @@ def handle_request(client_address, seq_num, data: Message, server_socket) -> Non
 
 
 def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission, last_chunk, data: Message):
+    """
+    This method packs the data to make it ready to be sent to the receiving end includes the header and the data itself
+    :param control_bits: control bits represent the type of Packet that will be sent
+    :param seq_num: the current sequence number
+    :param total_chunks: the number of chunks that will be sent
+    :param chunk_num: current chunk
+    :param retransmission: ask for retransmission true/false
+    :param last_chunk: last chunk true/false
+    :param data: the data/chunk
+    :return: a packet ready to be sent
+    """
     control_bits_bytes = control_bits.to_bytes(1, byteorder='big')
     data_size_bytes = len(data.to_json()).to_bytes(4, byteorder='big')
     seq_num_bytes = seq_num.to_bytes(4, byteorder='big')
@@ -352,13 +392,17 @@ def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission, la
     #     i = random.randint(0, 3)
     #     checksum = checksum[:i] + bytes([checksum[i] ^ 0xFF]) + checksum[i + 1:]
     print("--------------Sent packet--------------")
-    print(f"Details: Control_bits:{get_bits(control_bits)},Seq:{seq_num},Total:{total_chunks}")
+    print(f"Details: Control_bits:{bits_to_string(control_bits)},Seq:{seq_num},Total:{total_chunks}")
     print(f"Chunk:{chunk_num} Data_size:{len(data.to_json())} Retransmission:{retransmission} Last_chunk:{last_chunk}")
     print(f"Data:{data.to_json()}")
     return packet
 
 
-def get_bits(control_bits_bytes):
+def bits_to_string(control_bits_bytes):
+    """
+    :param control_bits_bytes: control bits represent the type of Packet that will be sent/received
+    :return: String name of the control bits
+    """
     if control_bits_bytes == SYN:
         return "SYN"
     elif control_bits_bytes == SYN_ACK:
@@ -380,6 +424,14 @@ def get_bits(control_bits_bytes):
 
 
 def unpack_data(packet):
+    """
+    Unpack the data
+    Get the header from bits to control_bits, data_size, seq_num,
+    total, chunk_num, retransmission_flag, last_chunk_flag
+    :param packet: the packet that was received from the sender
+    :return: control_bits, data_size, seq_num, total, chunk_num, retransmission_flag, last_chunk_flag,
+    message_object
+    """
     control_bits = int.from_bytes(packet[:1], byteorder='big')
     data_size = int.from_bytes(packet[1:5], byteorder='big')
     seq_num = int.from_bytes(packet[5:9], byteorder='big')
@@ -397,7 +449,7 @@ def unpack_data(packet):
     if checksum != computed_checksum:
         raise ValueError('Packet has been corrupted')
     print("------------Received packet------------")
-    print(f"Details: control_bits:{get_bits(control_bits)},seq:{seq_num},chunk:{chunk_num}")
+    print(f"Details: control_bits:{bits_to_string(control_bits)},seq:{seq_num},chunk:{chunk_num}")
     print(f"data_size:{len(data)} retransmission:{retransmission_flag} last_chunk:{last_chunk_flag}")
     print(f"data:{message_object}")
     print("---------------------------------------")
@@ -405,6 +457,9 @@ def unpack_data(packet):
 
 
 def handle_buffer():
+    """
+    Update the global buffer size variable based on the amount
+    """
     global buffer_size, received_counter
     if received_counter == 0 and buffer_size > 250:
         buffer_size = int(buffer_size / 2)
@@ -413,6 +468,11 @@ def handle_buffer():
 
 
 def slice_data(data):
+    """
+    slice the full data from the sql server into a smaller chunks based on the buffered size
+    :param data: the data to be sent
+    :return: chunks array
+    """
     global buffer_size
     # header size
     header_size = 23
@@ -435,6 +495,10 @@ def slice_data(data):
 
 
 def concatenate_chunks(chunks):
+    """
+    :param chunks: the array of chunks representing the full data
+    :return: get a string of the full data
+    """
     data = "".join(chunks)
     return data
 

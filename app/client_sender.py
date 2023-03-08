@@ -5,8 +5,10 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
 from games import validate_platform, validate_category, validate_score, validate_year
+
 mac_str = uuid.getnode()
 client_mac = ':'.join(['{:02x}'.format((mac_str >> i) & 0xff) for i in range(0, 48, 8)])
+broadcast = "255.255.255.255"
 network_interface = "enp0s3"
 client_ip = "0.0.0.0"
 dns_server_ip = ""
@@ -38,7 +40,13 @@ def get_app_server_port():
     return app_server_port
 
 
-def handle_ip(pkt):
+def handle_dhcp_packets(pkt):
+    """
+    This method is passed to scapy's sniff
+    captures and handles the dhcp packets
+    expecting to receive offer and ack packets
+    :param pkt: the packet that captured
+    """
     global dns_server_ip, client_ip
     time.sleep(1)
     if DHCP in pkt and pkt[DHCP].options[0][1] == 2:
@@ -46,8 +54,8 @@ def handle_ip(pkt):
         print(f"from {pkt[Ether].src}")
         ip = pkt[BOOTP].yiaddr
         mac = pkt[Ether].src
-        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=client_ip, dst="255.255.255.255") / UDP(sport=68,
-                                                                                                       dport=67) / BOOTP(
+        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=client_ip, dst=broadcast) / UDP(sport=68,
+                                                                                               dport=67) / BOOTP(
             op=1, chaddr=mac) / DHCP(
             options=[("message-type", message_types[1]), ("requested_addr", ip), ("server_id", pkt[IP].src), "end"])
         sendp(dhcp_request)
@@ -63,6 +71,9 @@ def handle_ip(pkt):
 
 
 def send_dhcp_discover():
+    """
+    Send to the DHCP server a Discover packet
+    """
     print("----------DHCP Discover----------")
     print(f"Client details: client mac:{client_mac}")
     dhcp_discover = Ether(src=client_mac, dst="ff:ff:ff:ff:ff:ff") / \
@@ -79,14 +90,23 @@ def send_dhcp_discover():
 
 
 def dns_packet_handle():
+    """
+    Send a DNS request to the DNS server asking for the ip of the Application server
+    """
     print("----------DNS Request----------")
     print(f"App needed:{app_server_name}")
     dns_query = DNSQR(qname=app_server_name)
-    dns_packet = IP(src=client_ip, dst=dns_server_ip) / UDP(sport=12345, dport=53) / DNS(rd=1, qd=dns_query)
+    dns_packet = IP(src=client_ip, dst=dns_server_ip) / UDP(sport=20961, dport=53) / DNS(rd=1, qd=dns_query)
     send(dns_packet)
 
 
 def dns_response(pkt):
+    """
+        This method is passed to scapy's sniff
+        captures and handles the dns packet
+        and get the app server ip
+        :param pkt: the packet that captured
+    """
     global app_server_ip
     if pkt.haslayer(DNS) and pkt.haslayer(DNSRR):
         print("----------DNS ----------")

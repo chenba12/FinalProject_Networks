@@ -9,21 +9,31 @@ from message import add_game_message, json_to_message, get_all_message, get_game
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
     update_game_message
 
+# This file handles the TCP client methods
+# connects to the Application server TCP socket
+# Send request to get data from the Application server
 BUFFER_SIZE = 8000
 
 
 def tcp_connect_to_app_server():
+    """
+    Open TCP socket in order to connect to the Application server TCP socket
+    """
     print("----------TCP Connection----------")
     print(f"Server details: ({get_app_server_ip()} {get_app_server_port()})")
     client_socket = socket.socket()
     client_socket.connect((get_app_server_ip(), get_app_server_port()))
     print("This is a SQL server")
     handle_request(client_socket)
-
-    client_socket.close()  # close the connection
+    client_socket.close()
 
 
 def handle_request(client_socket):
+    """
+    This method is getting user input about which data the user want to send over to the server
+    and then get a response
+    :param client_socket: the TCP client socket
+    """
     running = True
     while running:
         print("The following methods are available")
@@ -124,6 +134,12 @@ def handle_request(client_socket):
 
 
 def tcp_handle_respond(client_socket, request):
+    """
+    handles the response from the server send the data over as json and this method convert it to Message class obj
+    and get the data from there
+    :param client_socket: the TCP client socket
+    :param request: The request that the user wanted to send to the server
+    """
     client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
     data = client_socket.recv(BUFFER_SIZE)
     json_data = json.loads(data.decode("utf-8"))

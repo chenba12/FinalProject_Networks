@@ -12,6 +12,10 @@ app_server_ip = "10.0.2.15"
 
 
 def dns_server(packet) -> None:
+    """
+    captures dns packets and look for qname that equals to mySQLApp.com
+    :param packet: the dns packet that was captured
+    """
     if packet.haslayer(DNSQR):
         # Delay
         sleep(1)
@@ -23,9 +27,9 @@ def dns_server(packet) -> None:
             print(f"Details: from:{ip_src} for:{app_name}")
             # Respond with a DNS record for mySQLApp.com
             dns_resp = DNSRR(rrname=dns_req, rdata=app_server_ip)
+            ip = IP(src=dns_server_ip, dst=ip_src)
             udp = UDP(sport=53, dport=packet[UDP].sport)
             dns = DNS(id=packet[DNS].id, qr=1, an=dns_resp)
-            ip = IP(src=dns_server_ip, dst=ip_src)
             send(ip / udp / dns)
             print(f"Sent DNS Respond to {ip_src}")
             print(f"App Details: {app_name} {app_server_ip}")
@@ -33,4 +37,4 @@ def dns_server(packet) -> None:
 
 if __name__ == '__main__':
     print(f"---------DNS server UP---------")
-    pkt = sniff(filter='udp port 53', prn=dns_server)
+    sniff(filter='udp port 53', prn=dns_server)

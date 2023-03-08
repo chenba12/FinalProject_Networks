@@ -24,6 +24,7 @@ def json_to_message(json_object) -> Message:
                    body=json_object['body'])
 
 
+# Used in the RUDP server/client
 def str_to_message(string) -> Message:
     prefix1 = "fun:"
     prefix2 = "body:"

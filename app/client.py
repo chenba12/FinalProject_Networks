@@ -2,12 +2,15 @@ from scapy.sendrecv import sniff
 
 from rudp_client import udp_connect_to_server
 from tcp_client import tcp_connect_to_app_server
-from client_sender import send_dhcp_discover, filter_port, handle_ip, network_interface, \
+from client_sender import send_dhcp_discover, filter_port, handle_dhcp_packets, network_interface, \
     dns_packet_handle, dns_response, get_client_ip, get_dns_server_ip
+
+# this file handles the client flow
+# run this to start a new client
 
 if __name__ == '__main__':
     send_dhcp_discover()
-    sniff(filter=filter_port, timeout=10, count=3, prn=handle_ip, iface=network_interface)
+    sniff(filter=filter_port, timeout=10, count=3, prn=handle_dhcp_packets, iface=network_interface)
     print("IP address assigned to client: " + get_client_ip())
     print("DNS server IP: " + get_dns_server_ip())
     print("----------DHCP DONE----------")
