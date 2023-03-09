@@ -50,7 +50,7 @@ class TestSqlManager(unittest.TestCase):
         games = get_game_from_price(40)
         self.assertIsNotNone(games)
         self.assertEqual(len(games), 1)
-        self.assertEqual(games[0]['name'], 'The Legend of Zelda')
+        self.assertEqual(games[0]['price'], 49.99)
 
     def test_get_game_by_platform(self):
         delete_all()
