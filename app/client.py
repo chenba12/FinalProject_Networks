@@ -1,3 +1,5 @@
+import sys
+
 from scapy.sendrecv import sniff
 
 from rudp_client import udp_connect_to_server
@@ -10,6 +12,13 @@ from client_sender import send_dhcp_discover, filter_port, handle_dhcp_packets, 
 
 if __name__ == '__main__':
     print("----------Client UP---------")
+    if len(sys.argv) < 2:
+        print("Usage: python client.py <param1>")
+        exit(1)
+    else:
+        param1 = sys.argv[1]
+        print(f"Network interface: {param1}")
+        network_interface = param1
     send_dhcp_discover()
     sniff(filter=filter_port, timeout=10, count=3, prn=handle_dhcp_packets, iface=network_interface)
     print("IP address assigned to client: " + get_client_ip())

@@ -105,4 +105,11 @@ def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
 
 if __name__ == '__main__':
     print(f"---------DNS server UP---------")
+    if len(sys.argv) < 2:
+        print("Usage: python client.py <param1>")
+        exit(1)
+    else:
+        param1 = sys.argv[1]
+        print(f"Network interface: {param1}")
+        network_interface = param1
     sniff(filter=filter_port, prn=handle_dhcp, iface=network_interface)

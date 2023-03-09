@@ -155,6 +155,7 @@ def handle_request(client_socket, message_object) -> None:
         case _:
             print("Got Invalid error")
 
+
 if __name__ == '__main__':
     setup_db()
     first_setup()

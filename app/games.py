@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 # This file have all the methods related to the Game class
 # The class is used as an ORM (Object-relation mapping)

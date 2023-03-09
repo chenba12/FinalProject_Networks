@@ -6,6 +6,9 @@ from scapy.layers.l2 import Ether
 
 from games import validate_platform, validate_category, validate_score, validate_year
 
+# use this import for tests
+# from .games import validate_platform, validate_category, validate_score, validate_year
+
 mac_str = uuid.getnode()
 client_mac = ':'.join(['{:02x}'.format((mac_str >> i) & 0xff) for i in range(0, 48, 8)])
 broadcast = "255.255.255.255"
@@ -52,13 +55,16 @@ def handle_dhcp_packets(pkt):
     if DHCP in pkt and pkt[DHCP].options[0][1] == 2:
         print("---------Offer Received---------")
         print(f"from {pkt[Ether].src}")
-        ip = pkt[BOOTP].yiaddr
+        print(f"{pkt[BOOTP].yiaddr}")
+        client_ip = pkt[BOOTP].yiaddr
+
         mac = pkt[Ether].src
 
-        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=ip, dst=broadcast) / UDP(sport=68,
-                                                                                        dport=67) / BOOTP(
+        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=client_ip, dst=broadcast) / UDP(sport=68,
+                                                                                               dport=67) / BOOTP(
             op=1, chaddr=mac) / DHCP(
-            options=[("message-type", message_types[1]), ("requested_addr", ip), ("server_id", pkt[IP].src), "end"])
+            options=[("message-type", message_types[1]), ("requested_addr", client_ip), ("server_id", pkt[IP].src),
+                     "end"])
         sendp(dhcp_request)
         print(f"Sent DHCP Request to {pkt[IP].src}")
     if DHCP in pkt and pkt[DHCP].options[0][1] == 5:

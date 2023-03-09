@@ -1,5 +1,7 @@
 from message import error_message, result_message
-
+# use this imports for tests
+# from .message import error_message, result_message
+# from .games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 from games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
@@ -21,12 +23,13 @@ def send_to_client(connection, result) -> None:
 
 
 # Create the app.db and init the db_session
-def setup_db() -> None:
+def setup_db():
     global db_session
     engine = create_engine('sqlite:///app.db', echo=False)
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine)
     db_session = session()
+    return db_session
 
 
 # All the methods below that return data from the database return it as a list even if there is only 1 row
