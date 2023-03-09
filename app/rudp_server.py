@@ -30,7 +30,7 @@ APP_SERVER_PORT = 30962
 
 
 # header
-# | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | total_chunk (4 bytes) | chunk_num (4 bytes)
+# | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | total_chunk (4 bytes) | chunk_num (4 bytes) |
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
 def udp_server_start():
     global buffer_size, time_out, received_counter

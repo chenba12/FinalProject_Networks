@@ -57,26 +57,6 @@ def handle_dhcp(pkt):
         send_dhcp_ack(client_ip, client_mac, pkt, xid)
 
 
-def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
-    """
-    handle sending DHCP ACK after a DHCP request is received from the client and send it
-    :param c_ip: client ip
-    :param c_mac: client mac
-    :param pkt: the packet
-    :param xid: xid
-    """
-    print(f"----------Received DHCP Request from {c_mac}----------")
-    dhcp_ack = Ether(dst=pkt[Ether].src) / IP(src=server_ip, dst=broadcast) / UDP(sport=67,
-                                                                                  dport=68) / BOOTP(
-        op=2, yiaddr=c_ip, siaddr=server_ip, xid=xid, chaddr=c_mac) / DHCP(
-        options=[("message-type", message_types[1]), ("subnet_mask", subnet_mask), ("router", server_ip),
-                 ('domain', dns_name),
-                 ('name_server', dns_server_ip), "end"])
-    sendp(dhcp_ack)
-    print(f"Sent DHCP ACK to {c_mac}")
-    print("----------DONE----------")
-
-
 def send_dhcp_offer(c_mac, server_mac, xid) -> None:
     """
     handle sending DHCP Offer after a DHCP discover is received from the client
@@ -101,6 +81,26 @@ def send_dhcp_offer(c_mac, server_mac, xid) -> None:
                                'end'])
     sendp(dhcp_offer)
     print(f"----------Sent DHCP Offer to {c_mac}----------")
+
+
+def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
+    """
+    handle sending DHCP ACK after a DHCP request is received from the client and send it
+    :param c_ip: client ip
+    :param c_mac: client mac
+    :param pkt: the packet
+    :param xid: xid
+    """
+    print(f"----------Received DHCP Request from {c_mac}----------")
+    dhcp_ack = Ether(dst=pkt[Ether].src) / IP(src=server_ip, dst=broadcast) / UDP(sport=67,
+                                                                                  dport=68) / BOOTP(
+        op=2, yiaddr=c_ip, siaddr=server_ip, xid=xid, chaddr=c_mac) / DHCP(
+        options=[("message-type", message_types[1]), ("subnet_mask", subnet_mask), ("router", server_ip),
+                 ('domain', dns_name),
+                 ('name_server', dns_server_ip), "end"])
+    sendp(dhcp_ack)
+    print(f"Sent DHCP ACK to {c_mac}")
+    print("----------DONE----------")
 
 
 if __name__ == '__main__':

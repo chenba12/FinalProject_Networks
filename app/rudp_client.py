@@ -189,10 +189,8 @@ def udp_connect_to_server():
                             release_year = validate_year_check()
                             request = update_game_message(game_id, name, platforms, category, price, score,
                                                           release_year)
-                            sent_packet = pack_data(PSH, seq_num, 0, 0, 0, 0, request)
-                            client_socket.sendto(sent_packet, server_address)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
-                                                                  server_address)
+                                                                  request, server_address)
                         case 13:
                             print("Exit...")
                             break
@@ -203,11 +201,13 @@ def udp_connect_to_server():
             client_socket.sendto(sent_packet, server_address)
 
 
-def handle_request(client_socket, seq_num, server_address):
+def handle_request(client_socket, seq_num, request, server_address):
     global time_out, received_counter, buffer_size
     client_socket.settimeout(time_out)
     while True:
+        sent_packet = pack_data(PSH, seq_num, 0, 0, 0, 0, request)
         try:
+            client_socket.sendto(sent_packet, server_address)
             print(f"Waiting for ACK")
             received_packet, address = client_socket.recvfrom(buffer_size)
             try:
@@ -228,14 +228,12 @@ def handle_request(client_socket, seq_num, server_address):
                     data_chunks.clear()
                     break
         except socket.timeout:
-            # TODO check
-            print("why timeout?")
+            print("Timeout")
             time_out += 1
             client_socket.settimeout(time_out)
             received_counter = 0
             handle_buffer()
-            # sent_packet = pack_data(PSH, seq_num, 0, 0, 0, f"data")
-            # client_socket.sendto(sent_packet, server_address)
+            continue
         received_counter += 1
         reset_timeout(client_socket)
     return sent_packet, seq_num

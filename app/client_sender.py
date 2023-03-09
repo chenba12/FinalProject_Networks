@@ -54,8 +54,9 @@ def handle_dhcp_packets(pkt):
         print(f"from {pkt[Ether].src}")
         ip = pkt[BOOTP].yiaddr
         mac = pkt[Ether].src
-        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=client_ip, dst=broadcast) / UDP(sport=68,
-                                                                                               dport=67) / BOOTP(
+
+        dhcp_request = Ether(dst="ff:ff:ff:ff:ff:ff") / IP(src=ip, dst=broadcast) / UDP(sport=68,
+                                                                                        dport=67) / BOOTP(
             op=1, chaddr=mac) / DHCP(
             options=[("message-type", message_types[1]), ("requested_addr", ip), ("server_id", pkt[IP].src), "end"])
         sendp(dhcp_request)
@@ -77,7 +78,7 @@ def send_dhcp_discover():
     print("----------DHCP Discover----------")
     print(f"Client details: client mac:{client_mac}")
     dhcp_discover = Ether(src=client_mac, dst="ff:ff:ff:ff:ff:ff") / \
-                    IP(src=client_ip, dst="255.255.255.255") / \
+                    IP(src=client_ip, dst=broadcast) / \
                     UDP(sport=68, dport=67) / \
                     BOOTP(op=1, chaddr=client_mac) / \
                     DHCP(options=[("message-type", message_types[0]),

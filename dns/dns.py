@@ -21,12 +21,11 @@ def dns_server(packet) -> None:
         sleep(1)
         ip_src = packet[IP].src
         dns_req = packet[DNSQR].qname.decode().rstrip('.')
-        # Only send out
         if dns_req == app_name:
             print(f"---------DNS New Request---------")
             print(f"Details: from:{ip_src} for:{app_name}")
             # Respond with a DNS record for mySQLApp.com
-            dns_resp = DNSRR(rrname=dns_req, rdata=app_server_ip)
+            dns_resp = DNSRR(rrname=dns_req, rdata=app_server_ip, type="A")
             ip = IP(src=dns_server_ip, dst=ip_src)
             udp = UDP(sport=53, dport=packet[UDP].sport)
             dns = DNS(id=packet[DNS].id, qr=1, an=dns_resp)

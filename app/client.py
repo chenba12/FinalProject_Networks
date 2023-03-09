@@ -9,6 +9,7 @@ from client_sender import send_dhcp_discover, filter_port, handle_dhcp_packets, 
 # run this to start a new client
 
 if __name__ == '__main__':
+    print("----------Client UP---------")
     send_dhcp_discover()
     sniff(filter=filter_port, timeout=10, count=3, prn=handle_dhcp_packets, iface=network_interface)
     print("IP address assigned to client: " + get_client_ip())
