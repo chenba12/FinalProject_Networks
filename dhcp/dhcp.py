@@ -106,7 +106,7 @@ def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
 if __name__ == '__main__':
     print(f"---------DNS server UP---------")
     if len(sys.argv) < 2:
-        print("Usage: python client.py <param1>")
+        print("Usage: sudo python3 dhcp.py <network_interface>")
         exit(1)
     else:
         param1 = sys.argv[1]

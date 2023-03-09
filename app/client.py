@@ -13,7 +13,7 @@ from client_sender import send_dhcp_discover, filter_port, handle_dhcp_packets, 
 if __name__ == '__main__':
     print("----------Client UP---------")
     if len(sys.argv) < 2:
-        print("Usage: python client.py <param1>")
+        print("Usage: sudo python3 client.py <network_interface>")
         exit(1)
     else:
         param1 = sys.argv[1]
