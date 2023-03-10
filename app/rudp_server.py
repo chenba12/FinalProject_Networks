@@ -7,7 +7,7 @@ import threading
 
 from scapy.arch import get_if_hwaddr
 
-from app.dhcp import get_network_interface
+from dhcp import get_network_interface
 from games import json_to_game
 from message import error_message, Message, result_message, str_to_message
 from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id, \

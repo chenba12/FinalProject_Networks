@@ -8,12 +8,12 @@ from games import json_to_game
 from message import add_game_message, json_to_message, get_all_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
-    update_game_message
+    update_game_message, Message, str_to_message
 
 # This file handles the TCP client methods
 # connects to the Application server TCP socket
 # Send request to get data from the Application server
-BUFFER_SIZE = 8000
+BUFFER_SIZE = 1024
 
 
 def tcp_connect_to_app_server():
@@ -53,10 +53,10 @@ def handle_request(client_socket):
                     print("----------SQL Get All----------")
                     request = get_all_message()
                     client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
-                    data = client_socket.recv(BUFFER_SIZE)
-                    json_data = json.loads(data.decode("utf-8"))
-                    message_object = json_to_message(json_data)
-                    for item in message_object.body:
+                    data = recv_from_server(client_socket)
+                    json_obj = json.loads(data)
+                    message_obj = json_to_message(json_obj)
+                    for item in message_obj.body:
                         game = json_to_game(item)
                         print(game)
                 case 2:
@@ -133,6 +133,17 @@ def handle_request(client_socket):
                     break
 
 
+def recv_from_server(sock):
+    received_data = b''
+    while True:
+        chunk = sock.recv(BUFFER_SIZE)
+        if not chunk:
+            return received_data.decode()
+        received_data += chunk
+        if len(chunk) < BUFFER_SIZE:
+            return received_data.decode()
+
+
 def tcp_handle_respond(client_socket, request):
     """
     handles the response from the server send the data over as json and this method convert it to Message class obj
@@ -141,8 +152,8 @@ def tcp_handle_respond(client_socket, request):
     :param request: The request that the user wanted to send to the server
     """
     client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
-    data = client_socket.recv(BUFFER_SIZE)
-    json_data = json.loads(data.decode("utf-8"))
+    data = recv_from_server(client_socket)
+    json_data = json.loads(data)
     message_object = json_to_message(json_data)
     if len(message_object.body) == 0:
         print("No Game found")

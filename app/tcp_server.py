@@ -15,7 +15,7 @@ import json
 # constants
 APP_SERVER_IP = "10.0.2.15"
 APP_SERVER_PORT = 30961
-BUFFER_SIZE = 8000
+BUFFER_SIZE = 1024
 
 
 def start_server() -> None:
