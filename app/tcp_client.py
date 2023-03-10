@@ -52,7 +52,8 @@ def handle_request(client_socket):
                     print("----------SQL Get All----------")
                     request = get_all_message()
                     client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
-                    data = client_socket.recv(BUFFER_SIZE)
+                    data = client_socket.re
+                    cv(BUFFER_SIZE)
                     json_data = json.loads(data.decode("utf-8"))
                     message_object = json_to_message(json_data)
                     for item in message_object.body:

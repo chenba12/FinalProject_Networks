@@ -11,7 +11,7 @@ from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id
     get_game_by_name, get_games_by_platform, get_games_by_category, delete_game_by_id, get_games_by_score, \
     get_games_by_date, get_game_from_price, get_games_between_price_points, udp_update_game
 
-# constants
+# constants and globals
 buffer_size = 1024
 SYN = 0b00000010
 SYN_ACK = 0b00000100
@@ -27,13 +27,14 @@ time_out = 3
 received_counter = 0
 APP_SERVER_IP = "10.0.2.15"
 APP_SERVER_PORT = 30962
+retransmission = 0
 
 
 # header
 # | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | total_chunk (4 bytes) | chunk_num (4 bytes) |
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
 def udp_server_start():
-    global buffer_size, time_out, received_counter
+    global buffer_size, time_out, received_counter, retransmission
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
@@ -50,25 +51,26 @@ def udp_server_start():
         except ValueError:
             print("Sending NAK")
             seq_num = int.from_bytes(received_packet[1:5], byteorder='big')
-            received_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
+            received_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
             server_socket.sendto(received_packet, client_address)
             continue
         if client_address not in client_list:
             print(f"---------NEW Client: {client_address} seq_number={seq_num}---------")
             client_list.append(client_address)
-            handle(client_address, control_bits, seq_num, server_socket)
+
+            client_thread = threading.Thread(target=handle_client(client_address, control_bits, seq_num, server_socket))
 
 
 # header
 # | control bits (1 byte) | data size (4 bytes) | seq_number (4 bytes) | chunk_num (4 bytes)
 # | retransmission flag (1 byte) | last chunk flag (1 byte) | | checksum (4 bytes) |
-def handle(client_address, control_bits, seq_num, server_socket):
+def handle_client(client_address, control_bits, seq_num, server_socket):
     global received_counter, time_out
     client_flag = True
     if control_bits == SYN:
         server_socket.settimeout(time_out)
         seq_num += 1
-        sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, 0, 0, Message("SYN-ACK", ""))
+        sent_packet = pack_data(SYN_ACK, seq_num, 0, 0, retransmission, 0, Message("SYN-ACK", ""))
         server_socket.sendto(sent_packet, client_address)
         server_socket.settimeout(time_out)
     while client_flag:
@@ -78,13 +80,9 @@ def handle(client_address, control_bits, seq_num, server_socket):
             received_packet, client_address = server_socket.recvfrom(buffer_size)
         except socket.timeout:
             print(f"Timeout: {seq_num}")
-            time_out += 1
-            server_socket.settimeout(time_out)
-            received_counter = 0
-            handle_buffer()
+            handle_timeout_error(server_socket)
             continue
-        received_counter += 1
-        reset_timeout(server_socket)
+        handle_recv_success(server_socket)
         try:
             control_bits, data_size, seq_num, total, chunk_num, \
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
@@ -101,7 +99,7 @@ def handle(client_address, control_bits, seq_num, server_socket):
                                                                                              control_bits, seq_num,
                                                                                              server_socket)
         except ValueError:
-            sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
+            sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
             server_socket.sendto(sent_packet, client_address)
 
 
@@ -130,25 +128,22 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
             try:
                 sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, total_chunks=size,
                                         chunk_num=size - i,
-                                        retransmission=0, last_chunk=last_chunk, data=result_message(chunk))
+                                        retransmission_flag=retransmission, last_chunk=last_chunk,
+                                        data=result_message(chunk))
                 server_socket.sendto(sent_packet, client_address)
                 received_packet, client_address = server_socket.recvfrom(buffer_size)
             except socket.timeout:
                 print(f"timeout {seq_num}")
-                time_out += 1
-                server_socket.settimeout(time_out)
-                received_counter = 0
-                handle_buffer()
+                handle_timeout_error(server_socket)
                 continue
-            received_counter += 1
-            reset_timeout(server_socket)
+            handle_recv_success(server_socket)
             try:
                 control_bits, data_size, seq_num, total, chunk_num, \
                     retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
                 if control_bits == ACK:
                     waiting_for_ack = False
             except ValueError:
-                sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
+                sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
                 server_socket.sendto(sent_packet, client_address)
         i += 1
     return seq_num
@@ -170,26 +165,20 @@ def close_client_connection(client_address, client_flag, control_bits, seq_num, 
     global time_out, received_counter
     while client_flag:
         sent_packet = pack_data(control_bits=FIN_ACK, seq_num=seq_num, total_chunks=0, chunk_num=0,
-                                retransmission=0, last_chunk=0, data=Message("FIN-ACK", ""))
+                                retransmission_flag=retransmission, last_chunk=0, data=Message("FIN-ACK", ""))
         server_socket.sendto(sent_packet, client_address)
         try:
             received_packet, client_address = server_socket.recvfrom(buffer_size)
         except socket.timeout:
             print(f"Timeout: seq_num={seq_num}")
-            sent_packet = pack_data(FIN_ACK, seq_num, 0, 0, 0, 0, Message("FIN-ACK", ""))
-            server_socket.sendto(sent_packet, client_address)
-            time_out += 1
-            server_socket.settimeout(time_out)
-            received_counter = 0
-            handle_buffer()
+            handle_timeout_error(server_socket)
             continue
-        received_counter += 1
-        reset_timeout(server_socket)
+        handle_recv_success(server_socket)
         try:
             control_bits, data_size, seq_num, total, chunk_num, \
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
         except ValueError:
-            sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
+            sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
             server_socket.sendto(sent_packet, client_address)
         if control_bits == FIN_ACK:
             print(f"---------Closing communication with: {client_address}---------")
@@ -349,14 +338,14 @@ def handle_psh_request(client_address, seq_num, data: Message, server_socket) ->
     return seq_num
 
 
-def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission, last_chunk, data: Message):
+def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission_flag, last_chunk, data: Message):
     """
     This method packs the data to make it ready to be sent to the receiving end includes the header and the data itself
     :param control_bits: control bits represent the type of Packet that will be sent
     :param seq_num: the current sequence number
     :param total_chunks: the number of chunks that will be sent
     :param chunk_num: current chunk
-    :param retransmission: ask for retransmission true/false
+    :param retransmission_flag: ask for retransmission true/false
     :param last_chunk: last chunk true/false
     :param data: the data/chunk
     :return: a packet ready to be sent
@@ -366,7 +355,7 @@ def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission, la
     seq_num_bytes = seq_num.to_bytes(4, byteorder='big')
     total_chunks_bytes = total_chunks.to_bytes(4, byteorder='big')
     chunk_num_bytes = chunk_num.to_bytes(4, byteorder='big')
-    retransmission_flag = retransmission.to_bytes(1, byteorder='big')
+    retransmission_flag = retransmission_flag.to_bytes(1, byteorder='big')
     last_chunk_flag = last_chunk.to_bytes(1, byteorder='big')
     header = control_bits_bytes + data_size_bytes + seq_num_bytes + total_chunks_bytes \
              + chunk_num_bytes + retransmission_flag + last_chunk_flag
@@ -380,7 +369,8 @@ def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission, la
     #     checksum = checksum[:i] + bytes([checksum[i] ^ 0xFF]) + checksum[i + 1:]
     print("--------------Sent packet--------------")
     print(f"Details: Control_bits:{bits_to_string(control_bits)},Seq:{seq_num},Total:{total_chunks}")
-    print(f"Chunk:{chunk_num} Data_size:{len(data.to_json())} Retransmission:{retransmission} Last_chunk:{last_chunk}")
+    print(f"Chunk:{chunk_num} Data_size:{len(data.to_json())} Retransmission:{retransmission_flag} "
+          f"Last_chunk:{last_chunk}")
     print(f"Data:{data.to_json()}")
     return packet
 
@@ -495,6 +485,22 @@ def reset_timeout(server_socket):
     if received_counter > 1:
         time_out = 3
         server_socket.settimeout(time_out)
+
+
+def handle_recv_success(current_socket):
+    global received_counter, retransmission
+    received_counter += 1
+    retransmission = 0
+    reset_timeout(current_socket)
+
+
+def handle_timeout_error(current_socket):
+    global time_out, received_counter, retransmission
+    time_out += 1
+    current_socket.settimeout(time_out)
+    received_counter = 0
+    handle_buffer()
+    retransmission = 1
 
 
 if __name__ == '__main__':
