@@ -28,11 +28,11 @@ if __name__ == '__main__':
     sniff(filter=f"udp port 53 and src {get_dns_server_ip()}", prn=dns_response, timeout=10, count=1)
     print("----------DNS DONE----------")
     while True:
-        connect_to = input("Please choose connection TCP or UDP: ")
+        connect_to = input("Please choose connection protocol TCP or RUDP: ")
         if connect_to == "TCP":
             tcp_connect_to_app_server()
             break
-        elif connect_to == "UDP":
+        elif connect_to == "RUDP":
             udp_connect_to_server()
             break
         else:

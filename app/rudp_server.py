@@ -315,7 +315,6 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
         waiting_for_ack = True
         while waiting_for_ack:
             try:
-                time.sleep(1)
                 sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, total_chunks=size,
                                         chunk_num=size - i,
                                         retransmission_flag=retransmission, last_chunk=last_chunk,
