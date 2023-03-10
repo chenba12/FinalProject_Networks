@@ -4,7 +4,6 @@ import math
 import socket
 import hashlib
 import threading
-import time
 
 from games import json_to_game
 from message import error_message, Message, result_message, str_to_message
@@ -15,7 +14,7 @@ from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id
 # constants and globals
 buffer_size = 1024
 SYN = 0b00000010
-SYN_ACK = 0b00000100
+SYN_ACK = 0b00000110
 ACK = 0b00000001
 PSH = 0b00001000
 PSH_ACK = 0b00001100
@@ -338,43 +337,6 @@ def send_to_chunks(client_address, seq_num, result, server_socket):
     return seq_num
 
 
-def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission_flag, last_chunk, data: Message):
-    """
-    This method packs the data to make it ready to be sent to the receiving end includes the header and the data itself
-    :param control_bits: control bits represent the type of Packet that will be sent
-    :param seq_num: the current sequence number
-    :param total_chunks: the number of chunks that will be sent
-    :param chunk_num: current chunk
-    :param retransmission_flag: ask for retransmission true/false
-    :param last_chunk: last chunk true/false
-    :param data: the data/chunk
-    :return: a packet ready to be sent
-    """
-    control_bits_bytes = control_bits.to_bytes(1, byteorder='big')
-    data_size_bytes = len(data.to_json()).to_bytes(4, byteorder='big')
-    seq_num_bytes = seq_num.to_bytes(4, byteorder='big')
-    total_chunks_bytes = total_chunks.to_bytes(4, byteorder='big')
-    chunk_num_bytes = chunk_num.to_bytes(4, byteorder='big')
-    retransmission_flag = retransmission_flag.to_bytes(1, byteorder='big')
-    last_chunk_flag = last_chunk.to_bytes(1, byteorder='big')
-    header = control_bits_bytes + data_size_bytes + seq_num_bytes + total_chunks_bytes \
-             + chunk_num_bytes + retransmission_flag + last_chunk_flag
-    checksum = hashlib.sha256(header).digest()[:4]
-    data_bytes = data.__str__().encode('utf-8')
-    packet = header + checksum + data_bytes
-    # TODO uncomment to make faulty check_sum
-    # if random.random() < 0.1:
-    #     # introduce random error in checksum
-    #     i = random.randint(0, 3)
-    #     checksum = checksum[:i] + bytes([checksum[i] ^ 0xFF]) + checksum[i + 1:]
-    print("--------------Sent packet--------------")
-    print(f"Details: Control_bits:{bits_to_string(control_bits)},Seq:{seq_num},Total:{total_chunks}")
-    print(f"Chunk:{chunk_num} Data_size:{len(data.to_json())} Retransmission:{retransmission_flag} "
-          f"Last_chunk:{last_chunk}")
-    print(f"Data:{data.to_json()}")
-    return packet
-
-
 def bits_to_string(control_bits_bytes):
     """
     :param control_bits_bytes: control bits represent the type of Packet that will be sent/received
@@ -398,6 +360,43 @@ def bits_to_string(control_bits_bytes):
         return "NAK"
     else:
         print("UNKNOWN")
+
+
+def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission_flag, last_chunk, data: Message):
+    """
+    This method packs the data to make it ready to be sent to the receiving end includes the header and the data itself
+    :param control_bits: control bits represent the type of Packet that will be sent
+    :param seq_num: the current sequence number
+    :param total_chunks: the number of chunks that will be sent
+    :param chunk_num: current chunk
+    :param retransmission_flag: ask for retransmission true/false
+    :param last_chunk: last chunk true/false
+    :param data: the data/chunk
+    :return: a packet ready to be sent
+    """
+    control_bits_bytes = control_bits.to_bytes(1, byteorder='big')
+    data_size_bytes = data.get_len().to_bytes(4, byteorder='big')
+    seq_num_bytes = seq_num.to_bytes(4, byteorder='big')
+    total_chunks_bytes = total_chunks.to_bytes(4, byteorder='big')
+    chunk_num_bytes = chunk_num.to_bytes(4, byteorder='big')
+    retransmission_flag = retransmission_flag.to_bytes(1, byteorder='big')
+    last_chunk_flag = last_chunk.to_bytes(1, byteorder='big')
+    header = control_bits_bytes + data_size_bytes + seq_num_bytes + total_chunks_bytes \
+             + chunk_num_bytes + retransmission_flag + last_chunk_flag
+    checksum = hashlib.sha256(header).digest()[:4]
+    data_bytes = data.__str__().encode('utf-8')
+    packet = header + checksum + data_bytes
+    # TODO uncomment to make faulty check_sum
+    # if random.random() < 0.1:
+    #     # introduce random error in checksum
+    #     i = random.randint(0, 3)
+    #     checksum = checksum[:i] + bytes([checksum[i] ^ 0xFF]) + checksum[i + 1:]
+    print("--------------Sent packet--------------")
+    print(f"Details: Control_bits:{bits_to_string(control_bits)},Seq:{seq_num},Total:{total_chunks}")
+    print(f"Chunk:{chunk_num} Data_size:{data.get_len()} Retransmission:{retransmission_flag} "
+          f"Last_chunk:{last_chunk}")
+    print(f"Data:{len(packet)}")
+    return packet
 
 
 def unpack_data(packet):
@@ -427,7 +426,8 @@ def unpack_data(packet):
         raise ValueError('Packet has been corrupted')
     print("------------Received packet------------")
     print(f"Details: control_bits:{bits_to_string(control_bits)},seq:{seq_num},chunk:{chunk_num}")
-    print(f"data_size:{len(data)} retransmission:{retransmission_flag} last_chunk:{last_chunk_flag}")
+    print(
+        f"data_size:{len(packet)} retransmission:{retransmission_flag} last_chunk:{last_chunk_flag}")
     print(f"data:{message_object}")
     print("---------------------------------------")
     return control_bits, data_size, seq_num, total, chunk_num, retransmission_flag, last_chunk_flag, message_object

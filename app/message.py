@@ -1,5 +1,7 @@
 # This file have all the methods related to the Message class
 # Used to send message between the SQL server and the client over TCP/RUDP connection
+import json
+
 
 class Message:
     func = ""
@@ -14,6 +16,10 @@ class Message:
             'func': self.func,
             'body': self.body
         }
+
+    def get_len(self):
+        json_str = json.dumps({'func': self.func, 'body': self.body})
+        return len(json_str)
 
     def __str__(self):
         return f"<Message fun:{self.func} body:{self.body}>"
