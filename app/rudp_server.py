@@ -4,6 +4,7 @@ import math
 import socket
 import hashlib
 import threading
+import time
 
 from games import json_to_game
 from message import error_message, Message, result_message, str_to_message
@@ -87,7 +88,6 @@ def handle_client(client_address, control_bits, seq_num, server_socket):
             control_bits, data_size, seq_num, total, chunk_num, \
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
             if control_bits == PSH:
-                print("GOT PUSH")
                 handle_psh_request(client_address, seq_num, data, server_socket)
                 # TODO uncomment to drop packets
                 # if random.random() < 0.5:
@@ -101,52 +101,6 @@ def handle_client(client_address, control_bits, seq_num, server_socket):
         except ValueError:
             sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
             server_socket.sendto(sent_packet, client_address)
-
-
-def send_to_chunks(client_address, seq_num, result, server_socket):
-    """
-       This method handles sending the chunks of the data that fit the current buffer size to the client
-       while also waiting for ack on each of them
-       :param client_address: the client ip and port
-       :param seq_num: the current sequence number
-       :param result: the result of the SQL query
-       :param server_socket: the server socket
-       :return: the current sequence number
-       """
-    global time_out, received_counter
-    chunks = slice_data(result)
-    size = len(chunks)
-    i = 1
-    for chunk in chunks:
-        if size - i == 0:
-            last_chunk = 1
-        else:
-            last_chunk = 0
-
-        waiting_for_ack = True
-        while waiting_for_ack:
-            try:
-                sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, total_chunks=size,
-                                        chunk_num=size - i,
-                                        retransmission_flag=retransmission, last_chunk=last_chunk,
-                                        data=result_message(chunk))
-                server_socket.sendto(sent_packet, client_address)
-                received_packet, client_address = server_socket.recvfrom(buffer_size)
-            except socket.timeout:
-                print(f"timeout {seq_num}")
-                handle_timeout_error(server_socket)
-                continue
-            handle_recv_success(server_socket)
-            try:
-                control_bits, data_size, seq_num, total, chunk_num, \
-                    retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
-                if control_bits == ACK:
-                    waiting_for_ack = False
-            except ValueError:
-                sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
-                server_socket.sendto(sent_packet, client_address)
-        i += 1
-    return seq_num
 
 
 def close_client_connection(client_address, client_flag, control_bits, seq_num, server_socket):
@@ -335,6 +289,53 @@ def handle_psh_request(client_address, seq_num, data: Message, server_socket) ->
             seq_num = seq_num_r
         case _:
             print("Got Invalid error")
+    return seq_num
+
+
+def send_to_chunks(client_address, seq_num, result, server_socket):
+    """
+       This method handles sending the chunks of the data that fit the current buffer size to the client
+       while also waiting for ack on each of them
+       :param client_address: the client ip and port
+       :param seq_num: the current sequence number
+       :param result: the result of the SQL query
+       :param server_socket: the server socket
+       :return: the current sequence number
+       """
+    global time_out, received_counter
+    chunks = slice_data(result)
+    size = len(chunks)
+    i = 1
+    for chunk in chunks:
+        if size - i == 0:
+            last_chunk = 1
+        else:
+            last_chunk = 0
+
+        waiting_for_ack = True
+        while waiting_for_ack:
+            try:
+                time.sleep(1)
+                sent_packet = pack_data(control_bits=PSH_ACK, seq_num=seq_num, total_chunks=size,
+                                        chunk_num=size - i,
+                                        retransmission_flag=retransmission, last_chunk=last_chunk,
+                                        data=result_message(chunk))
+                server_socket.sendto(sent_packet, client_address)
+                received_packet, client_address = server_socket.recvfrom(buffer_size)
+            except socket.timeout:
+                print(f"timeout {seq_num}")
+                handle_timeout_error(server_socket)
+                continue
+            handle_recv_success(server_socket)
+            try:
+                control_bits, data_size, seq_num, total, chunk_num, \
+                    retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
+                if control_bits == ACK:
+                    waiting_for_ack = False
+            except ValueError:
+                sent_packet = pack_data(NAK, seq_num, 0, 0, retransmission, 0, Message("NAK", ""))
+                server_socket.sendto(sent_packet, client_address)
+        i += 1
     return seq_num
 
 

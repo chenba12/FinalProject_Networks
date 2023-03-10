@@ -2,7 +2,8 @@ import json
 import socket
 
 from client_sender import get_app_server_ip, get_app_server_port, validate_id_check, validate_platform_check, \
-    validate_category_check, validate_price_check, validate_score_check, validate_year_check
+    validate_category_check, validate_price_check, validate_score_check, validate_year_check, validate_name_check, \
+    validate_price_range_check
 from games import json_to_game
 from message import add_game_message, json_to_message, get_all_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
@@ -52,8 +53,7 @@ def handle_request(client_socket):
                     print("----------SQL Get All----------")
                     request = get_all_message()
                     client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))  # send message
-                    data = client_socket.re
-                    cv(BUFFER_SIZE)
+                    data = client_socket.recv(BUFFER_SIZE)
                     json_data = json.loads(data.decode("utf-8"))
                     message_object = json_to_message(json_data)
                     for item in message_object.body:
@@ -61,13 +61,13 @@ def handle_request(client_socket):
                         print(game)
                 case 2:
                     print("----------SQL Add Game----------")
-                    name = input("Please enter Game Title: ")
+                    game_name = validate_name_check()
                     platforms = validate_platform_check()
                     category = validate_category_check()
                     price = validate_price_check()
                     score = validate_score_check()
                     release_year = validate_year_check()
-                    request = add_game_message(name=name, platform=platforms, category=category, price=price,
+                    request = add_game_message(name=game_name, platform=platforms, category=category, price=price,
                                                score=score,
                                                release_year=release_year)
                     tcp_handle_respond(client_socket, request)
@@ -78,7 +78,7 @@ def handle_request(client_socket):
                     tcp_handle_respond(client_socket, request)
                 case 4:
                     print("----------SQL Get Game By Name----------")
-                    game_name = input("Please enter Game Title: ")
+                    game_name = validate_name_check()
                     request = get_game_by_name_message(game_name)
                     tcp_handle_respond(client_socket, request)
                 case 5:
@@ -114,8 +114,7 @@ def handle_request(client_socket):
                     pass
                 case 11:
                     print("----------SQL Get Games By Price range----------")
-                    start = validate_price_check("start")
-                    end = validate_price_check("end")
+                    start, end = validate_price_range_check()
                     request = get_game_by_price_between_message(start, end)
                     tcp_handle_respond(client_socket, request)
                 case 12:

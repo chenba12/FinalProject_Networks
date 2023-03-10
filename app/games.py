@@ -17,7 +17,7 @@ class Game(Base):
     __tablename__ = 'Games'
 
     id = sa.Column('id', sa.Integer, primary_key=True, autoincrement=True)
-    name = sa.Column('name', sa.String, nullable=False, unique=True)
+    name = sa.Column('name', sa.String(45), nullable=False, unique=True )
     platform = sa.Column('platform', sa.String, nullable=False)
     category = sa.Column('category', sa.String, nullable=False)
     price = sa.Column('price', sa.Float, nullable=False)
@@ -68,3 +68,11 @@ def validate_platform(platform: str) -> bool:
 
 def validate_score(score: float) -> bool:
     return 0 <= score <= 100
+
+
+def validate_price(price: float) -> bool:
+    return 0 <= price <= 100
+
+
+def validate_name(name: str) -> bool:
+    return len(name) < 45

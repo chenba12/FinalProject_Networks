@@ -55,7 +55,6 @@ def add_game(name, platform, category, price, score, release_year) -> [Game]:
         game.price = price
         game.score = score
         game.release_year = release_year
-        print(game)
         db_session.add(game)
         db_session.commit()
         print(game)

@@ -13,8 +13,8 @@ from client_sender import send_dhcp_discover, filter_port, handle_dhcp_packets, 
 if __name__ == '__main__':
     print("----------Client UP---------")
     if len(sys.argv) < 2:
+        print("Using default network interface = enp0s3")
         print("Usage: sudo python3 client.py <network_interface>")
-        exit(1)
     else:
         param1 = sys.argv[1]
         print(f"Network interface: {param1}")
@@ -27,10 +27,13 @@ if __name__ == '__main__':
     dns_packet_handle()
     sniff(filter=f"udp port 53 and src {get_dns_server_ip()}", prn=dns_response, timeout=10, count=1)
     print("----------DNS DONE----------")
-    connect_to = input("Please choose connection TCP or UDP: ")
-    if connect_to == "TCP":
-        tcp_connect_to_app_server()
-    elif connect_to == "UDP":
-        udp_connect_to_server()
-    else:
-        print("Invalid protocol")
+    while True:
+        connect_to = input("Please choose connection TCP or UDP: ")
+        if connect_to == "TCP":
+            tcp_connect_to_app_server()
+            break
+        elif connect_to == "UDP":
+            udp_connect_to_server()
+            break
+        else:
+            print("Invalid protocol")

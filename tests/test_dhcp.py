@@ -46,3 +46,5 @@ class TestDHCP(unittest.TestCase):
 
         handle_dhcp_packets(ack)
         assert get_dns_server_ip() == "192.168.1.2"
+
+

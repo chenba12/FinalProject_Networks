@@ -3,7 +3,8 @@ import sys
 import random
 
 from client_sender import validate_platform_check, validate_category_check, validate_price_check, \
-    validate_score_check, validate_year_check, validate_id_check, get_app_server_ip, get_app_server_port
+    validate_score_check, validate_year_check, validate_id_check, get_app_server_ip, get_app_server_port, \
+    validate_price_range_check, validate_name_check
 from message import get_all_message, add_game_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
@@ -74,13 +75,13 @@ def udp_connect_to_server():
                         case 2:
                             print("----------SQL Add Game----------")
                             seq_num += 1
-                            name = input("Please enter Game Title: ")
+                            game_name = validate_name_check()
                             platforms = validate_platform_check()
                             category = validate_category_check()
                             price = validate_price_check()
                             score = validate_score_check()
                             release_year = validate_year_check()
-                            request = add_game_message(name=name, platform=platforms, category=category, price=price,
+                            request = add_game_message(name=game_name, platform=platforms, category=category, price=price,
                                                        score=score,
                                                        release_year=release_year)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
@@ -95,7 +96,7 @@ def udp_connect_to_server():
                         case 4:
                             print("----------SQL Get Game By Name----------")
                             seq_num += 1
-                            game_name = input("Please enter Game Title: ")
+                            game_name = validate_name_check()
                             request = get_game_by_name_message(game_name)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
                                                                   request, server_address)
@@ -145,8 +146,7 @@ def udp_connect_to_server():
                         case 11:
                             print("----------SQL Get Games By Price range----------")
                             seq_num += 1
-                            start = validate_price_check("start")
-                            end = validate_price_check("end")
+                            start, end = validate_price_range_check()
                             request = get_game_by_price_between_message(start, end)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
                                                                   request, server_address)
@@ -154,13 +154,13 @@ def udp_connect_to_server():
                             print("----------SQL Update Game----------")
                             seq_num += 1
                             game_id = validate_id_check()
-                            name = input("Please enter Game Title: ")
+                            game_name = validate_name_check()
                             platforms = validate_platform_check()
                             category = validate_category_check()
                             price = validate_price_check()
                             score = validate_score_check()
                             release_year = validate_year_check()
-                            request = update_game_message(game_id, name, platforms, category, price, score,
+                            request = update_game_message(game_id, game_name, platforms, category, price, score,
                                                           release_year)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
                                                                   request, server_address)
@@ -176,10 +176,13 @@ def udp_connect_to_server():
 def handle_request(client_socket, seq_num, request, server_address):
     global time_out, received_counter, buffer_size, retransmission
     client_socket.settimeout(time_out)
+    sent_packet = pack_data(PSH, seq_num, 0, 0, retransmission, 0, request)
+    client_socket.sendto(sent_packet, server_address)
+    timed_out = False
     while True:
-        sent_packet = pack_data(PSH, seq_num, 0, 0, retransmission, 0, request)
         try:
-            client_socket.sendto(sent_packet, server_address)
+            if timed_out:
+                sent_packet = pack_data(ACK, seq_num, 0, 0, 1, 0, Message("ACK", ""))
             print(f"Waiting for ACK")
             received_packet, address = client_socket.recvfrom(buffer_size)
             try:
@@ -201,6 +204,7 @@ def handle_request(client_socket, seq_num, request, server_address):
                     break
         except socket.timeout:
             print("Timeout")
+            timed_out = True
             handle_timeout_error(client_socket)
             continue
         handle_recv_success(client_socket)

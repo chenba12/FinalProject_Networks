@@ -4,7 +4,7 @@ from scapy.layers.dns import DNSQR, DNS, DNSRR
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
-from games import validate_platform, validate_category, validate_score, validate_year
+from games import validate_platform, validate_category, validate_score, validate_year, validate_price, validate_name
 
 # use this import for tests
 # from .games import validate_platform, validate_category, validate_score, validate_year
@@ -121,17 +121,38 @@ def dns_response(pkt):
         if app_address == app_server_name:
             app_server_ip = pkt[DNSRR].rdata
             print(f"IP of {app_server_name}:{app_server_ip}")
-            return True
 
 
-def validate_price_check(message: str = "") -> float:
+def validate_price_check() -> float:
+    price = 0
     while True:
         try:
-            price = float(input(f"Please enter {message} price: "))
-            break
+            price = float(input("Please valid price 0<=price<=100: "))
         except ValueError:
             print("Invalid input.")
+            continue
+        if not validate_price(price):
+            price = float(input("Please valid price 0<=price<=100: "))
+        else:
+            break
     return price
+
+
+def validate_price_range_check() -> (float, float):
+    start_price = 0
+    end_price = 0
+    while True:
+        try:
+            start_price = float(input("Please valid start price: 0<=price<=100: "))
+            end_price = float(input("Please valid end price: start_price<=price<=100: "))
+        except ValueError:
+            print("Invalid input.")
+            continue
+        if start_price > end_price and (not validate_price(start_price) or validate_price(end_price)):
+            print("Invalid input.")
+        else:
+            break
+    return start_price, end_price
 
 
 def validate_id_check() -> int:
@@ -197,3 +218,13 @@ def validate_platform_check() -> str:
         else:
             break
     return platforms
+
+
+def validate_name_check() -> str:
+    name = input("Please enter Game Title max 45 chars:")
+    while True:
+        if not validate_name(name):
+            name = input("Please enter Game Title max 45 chars:")
+        else:
+            break
+    return name
