@@ -12,7 +12,6 @@ import random
 network_interface = "enp0s3"
 server_ip = "192.168.1.1"
 dns_server_ip = "192.168.1.2"
-app_server_ip = "192.168.1.3"
 clients = []
 client_ip = "192.168.1.100"
 filter_port = "udp and (port 67 or 68)"

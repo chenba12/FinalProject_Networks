@@ -1,3 +1,4 @@
+import sys
 from time import sleep
 from scapy.layers.dns import DNSQR, DNSRR, DNS
 from scapy.layers.inet import IP, UDP
@@ -36,4 +37,11 @@ def dns_server(packet) -> None:
 
 if __name__ == '__main__':
     print(f"---------DNS server UP---------")
+    if len(sys.argv) < 2:
+        print("Using default Application server IP = 10.0.2.15")
+        print("Usage: sudo python3 dns.py <app_server_ip>")
+    else:
+        param1 = sys.argv[1]
+        print(f"Application server IP: {param1}")
+        app_server_ip = param1
     sniff(filter='udp port 53', prn=dns_server)
