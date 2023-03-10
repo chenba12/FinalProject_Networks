@@ -1,8 +1,9 @@
-import sys
 from time import sleep
 from scapy.layers.dns import DNSQR, DNSRR, DNS
 from scapy.layers.inet import IP, UDP
-from scapy.sendrecv import send, sniff
+from scapy.all import *
+
+from dhcp import get_network_interface
 
 # This is the DNS server file here the client will ask for the ip of the sql app
 
@@ -44,4 +45,8 @@ if __name__ == '__main__':
         param1 = sys.argv[1]
         print(f"Application server IP: {param1}")
         app_server_ip = param1
+
+    # Get the MAC address of the interface
+    mac_addr = get_if_hwaddr(get_network_interface())
+    print("MAC address of DNS: ", mac_addr)
     sniff(filter='udp port 53', prn=dns_server)

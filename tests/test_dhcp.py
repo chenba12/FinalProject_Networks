@@ -1,7 +1,3 @@
-import os
-import sys
-from time import sleep
-
 from scapy.all import *
 from scapy.layers.dhcp import BOOTP, DHCP
 from scapy.layers.inet import IP, UDP
@@ -9,7 +5,7 @@ from scapy.layers.l2 import Ether
 from app.client_sender import handle_dhcp_packets, send_dhcp_discover, get_client_ip, \
     get_dns_server_ip
 import unittest
-from dhcp.dhcp import broadcast, dns_name, subnet_mask, dns_server_ip
+from app.dhcp import broadcast, dns_name, subnet_mask, dns_server_ip
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 

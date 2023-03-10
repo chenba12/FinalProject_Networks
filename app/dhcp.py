@@ -13,7 +13,6 @@ network_interface = "enp0s3"
 server_ip = "192.168.1.1"
 dns_server_ip = "192.168.1.2"
 clients = []
-client_ip = "192.168.1.100"
 filter_port = "udp and (port 67 or 68)"
 message_types = ["offer", "ack"]
 dns_name = "myDNS.com"
@@ -102,13 +101,20 @@ def send_dhcp_ack(c_ip, c_mac, pkt, xid) -> None:
     print("----------DONE----------")
 
 
+def get_network_interface():
+    global network_interface
+    return network_interface
+
+
 if __name__ == '__main__':
-    print(f"---------DNS server UP---------")
+    print(f"---------DHCP server UP---------")
     if len(sys.argv) < 2:
         print("Using default network interface = enp0s3")
-        print("Usage: sudo python3 dhcp.py <network_interface>")
+        print("Usage: sudo python3 dns_dhcp.py <network_interface>")
     else:
         param1 = sys.argv[1]
         print(f"Network interface: {param1}")
         network_interface = param1
+    mac_addr = get_if_hwaddr(get_network_interface())
+    print("MAC address of DHCP: ", mac_addr)
     sniff(filter=filter_port, prn=handle_dhcp, iface=network_interface)

@@ -1,10 +1,8 @@
-from time import sleep
-from scapy.layers.dns import DNSQR, DNSRR, DNS
+from scapy.layers.dns import DNSRR, DNS
 from scapy.layers.inet import IP, UDP
-from scapy.sendrecv import send, sniff
 import unittest
 from app.client_sender import app_server_name, dns_response
-from dhcp.dhcp import dns_server_ip
+from app.dhcp import dns_server_ip
 
 
 class TestDNS(unittest.TestCase):

@@ -7,7 +7,7 @@ from scapy.layers.l2 import Ether
 from games import validate_platform, validate_category, validate_score, validate_year, validate_price, validate_name
 
 # use this import for tests
-# from .games import validate_platform, validate_category, validate_score, validate_year
+# from .games import validate_platform, validate_category, validate_score, validate_year, validate_price, validate_name
 
 mac_str = uuid.getnode()
 client_mac = ':'.join(['{:02x}'.format((mac_str >> i) & 0xff) for i in range(0, 48, 8)])
@@ -19,8 +19,7 @@ filter_port = "udp and (port 67 or 68)"
 message_types = ["discover", "request"]
 app_server_name = "mySQLApp.com"
 app_server_ip = ""
-app_server_port = 30962
-app_client_port = 20961
+app_server_port = 30961
 
 
 def get_client_ip():
@@ -46,7 +45,7 @@ def get_app_server_port():
 def handle_dhcp_packets(pkt):
     """
     This method is passed to scapy's sniff
-    captures and handles the dhcp packets
+    captures and handles the dns_dhcp packets
     expecting to receive offer and ack packets
     :param pkt: the packet that captured
     """

@@ -14,10 +14,10 @@ from rudp_server import pack_data, unpack_data, concatenate_chunks, SYN, SYN_ACK
 
 # constants
 data_chunks = []
-buffer_size = 1024
+buffer_size = 3500
 received_counter = 0
 time_out = 2
-retransmission = 0
+retransmission = 0b0
 
 
 def udp_connect_to_server():
@@ -81,7 +81,8 @@ def udp_connect_to_server():
                             price = validate_price_check()
                             score = validate_score_check()
                             release_year = validate_year_check()
-                            request = add_game_message(name=game_name, platform=platforms, category=category, price=price,
+                            request = add_game_message(name=game_name, platform=platforms, category=category,
+                                                       price=price,
                                                        score=score,
                                                        release_year=release_year)
                             sent_packet, seq_num = handle_request(client_socket, seq_num,
@@ -231,11 +232,13 @@ def end_connection(client_socket, seq_num, server_address):
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
         except ValueError:
             print(f"Got bad check_sum seq_num={seq_num}")
+            seq_num += 1
             sent_packet = pack_data(NAK, seq_num, 0, 0, 0, 0, Message("NAK", ""))
             client_socket.sendto(sent_packet, server_address)
             continue
         if control_bits == FIN_ACK:
             print("Got FIN_ACK closing...")
+            seq_num += 1
             sent_packet = pack_data(FIN_ACK, seq_num, 0, 0, 0, 0, Message("FIN-ACK", ""))
             client_socket.sendto(sent_packet, server_address)
             client_socket.close()

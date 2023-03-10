@@ -1,12 +1,11 @@
 from message import error_message, result_message
-# use this imports for tests
-# from .message import error_message, result_message
-# from .games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 from games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 import json
-
+# use this imports for tests
+# from .message import error_message, result_message
+# from .games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 
 # This class handles all the methods related to the sql database
 # everytime the server is opened it will delete the entire database and then write 30 games to it

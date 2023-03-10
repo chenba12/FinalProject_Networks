@@ -1,3 +1,6 @@
+from scapy.arch import get_if_hwaddr
+
+from dhcp import get_network_interface
 from sql_manager import get_all, send_to_client, add_game, send_error_to_client, get_game_by_id, get_game_by_name, \
     get_games_by_platform, get_games_by_category, delete_game_by_id, get_games_by_score, get_games_by_date, \
     get_game_from_price, get_games_between_price_points, update_game, setup_db, first_setup
@@ -11,8 +14,7 @@ import json
 
 # constants
 APP_SERVER_IP = "10.0.2.15"
-APP_SERVER_PORT = 30962
-APP_CLIENT_PORT = 20961
+APP_SERVER_PORT = 30961
 BUFFER_SIZE = 8000
 
 
@@ -24,7 +26,11 @@ def start_server() -> None:
     server_socket = socket.socket()  # get instance
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))  # bind host address and port together
-
+    print("----------Server Details----------")
+    mac_addr = get_if_hwaddr(get_network_interface())
+    print("MAC address: ", mac_addr)
+    print(f"IP address: {APP_SERVER_IP}")
+    print(f"Port: {APP_SERVER_PORT}")
     server_socket.listen(10)
     client_socket, address = server_socket.accept()  # accept new client_socket
     print("----------New client Connected----------")

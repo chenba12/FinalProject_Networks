@@ -5,6 +5,9 @@ import socket
 import hashlib
 import threading
 
+from scapy.arch import get_if_hwaddr
+
+from app.dhcp import get_network_interface
 from games import json_to_game
 from message import error_message, Message, result_message, str_to_message
 from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id, \
@@ -12,7 +15,7 @@ from sql_manager import get_all, add_game, first_setup, setup_db, get_game_by_id
     get_games_by_date, get_game_from_price, get_games_between_price_points, udp_update_game
 
 # constants and globals
-buffer_size = 1024
+buffer_size = 3500
 SYN = 0b00000010
 SYN_ACK = 0b00000110
 ACK = 0b00000001
@@ -26,8 +29,8 @@ current_packet = []
 time_out = 3
 received_counter = 0
 APP_SERVER_IP = "10.0.2.15"
-APP_SERVER_PORT = 30962
-retransmission = 0
+APP_SERVER_PORT = 30961
+retransmission = 0b0
 
 
 # header
@@ -38,6 +41,11 @@ def udp_server_start():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
+    print("----------Server Details----------")
+    mac_addr = get_if_hwaddr(get_network_interface())
+    print("MAC address: ", mac_addr)
+    print(f"IP address: {APP_SERVER_IP}")
+    print(f"Port: {APP_SERVER_PORT}")
     print("Waiting for Clients")
     server_socket.settimeout(None)
     while True:
@@ -438,9 +446,9 @@ def handle_buffer():
     Update the global buffer size variable based on the amount
     """
     global buffer_size, received_counter
-    if received_counter == 0 and buffer_size > 250:
+    if received_counter == 0 and buffer_size >= 450:
         buffer_size = int(buffer_size / 2)
-    if buffer_size != 1024 and received_counter > 1:
+    if buffer_size != 3500 and received_counter > 1:
         buffer_size = int(buffer_size * 2)
 
 
@@ -500,11 +508,11 @@ def handle_timeout_error(current_socket):
     current_socket.settimeout(time_out)
     received_counter = 0
     handle_buffer()
-    retransmission = 1
+    retransmission = 0b1
 
 
 if __name__ == '__main__':
     setup_db()
     first_setup()
-    print("----------UDP Server----------")
+    print("----------RUDP Server----------")
     udp_server_start()
