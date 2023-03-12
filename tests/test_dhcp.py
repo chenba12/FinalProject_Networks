@@ -2,12 +2,13 @@ from scapy.all import *
 from scapy.layers.dhcp import BOOTP, DHCP
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app.client_sender import handle_dhcp_packets, send_dhcp_discover, get_client_ip, \
     get_dns_server_ip
 import unittest
 from app.dhcp import broadcast, dns_name, subnet_mask, dns_server_ip
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 class TestDHCP(unittest.TestCase):
@@ -44,3 +45,5 @@ class TestDHCP(unittest.TestCase):
         assert get_dns_server_ip() == "192.168.1.2"
 
 
+if __name__ == '__main__':
+    unittest.main()

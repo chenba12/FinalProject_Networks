@@ -15,9 +15,9 @@ if __name__ == '__main__':
     print("----------Client UP---------")
     use_script = 'n'
     iface = "enp0s3"
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         print("Using default values: network interface = enp0s3 Using script? n")
-        print("Usage: sudo python3 client.py <network_interface> <Use script (y/n)>")
+        print("Usage: sudo python3 ./app/client.py <network_interface> <Use script (y/n)>")
     else:
         iface = sys.argv[1]
         use_script = sys.argv[2]

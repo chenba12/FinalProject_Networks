@@ -9,7 +9,7 @@ import random
 # THe client will also get the IP of the DNS server
 
 # constants
-network_interface = "enp0s3"
+network_interface = "wlo1"
 server_ip = "192.168.1.1"
 dns_server_ip = "192.168.1.2"
 clients = []
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     print(f"---------DHCP server UP---------")
     if len(sys.argv) < 2:
         print("Using default network interface = enp0s3")
-        print("Usage: sudo python3 dns_dhcp.py <network_interface>")
+        print("Usage: sudo python3 ./app/dhcp.py <network_interface>")
     else:
         param1 = sys.argv[1]
         print(f"Network interface: {param1}")

@@ -3,6 +3,7 @@ import json
 import math
 import socket
 import hashlib
+import sys
 import threading
 
 from scapy.arch import get_if_hwaddr
@@ -28,7 +29,7 @@ client_list = []
 current_packet = []
 time_out = 3
 received_counter = 0
-APP_SERVER_IP = "10.0.2.15"
+app_server_ip = "10.0.2.15"
 APP_SERVER_PORT = 30961
 retransmission = 0b0
 
@@ -40,11 +41,11 @@ def udp_server_start():
     global buffer_size, time_out, received_counter, retransmission
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
+    server_socket.bind((app_server_ip, APP_SERVER_PORT))
     print("----------Server Details----------")
     mac_addr = get_if_hwaddr(get_network_interface())
     print("MAC address: ", mac_addr)
-    print(f"IP address: {APP_SERVER_IP}")
+    print(f"IP address: {app_server_ip}")
     print(f"Port: {APP_SERVER_PORT}")
     print("Waiting for Clients")
     server_socket.settimeout(None)
@@ -512,6 +513,12 @@ def handle_timeout_error(current_socket):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Using default Application server IP = 10.0.2.15")
+        print("Usage: sudo python3 ./app/tcp_server.py <app_server_ip>")
+    else:
+        app_server_ip = sys.argv[1]
+        print(f"Application server IP: {app_server_ip}")
     setup_db()
     first_setup()
     print("----------RUDP Server----------")

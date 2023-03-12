@@ -1,4 +1,7 @@
+import os
+import sys
 import unittest
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.sql_manager import *
 
 
@@ -128,3 +131,7 @@ class TestSqlManager(unittest.TestCase):
     def test_get_game_by_name_invalid_score(self):
         with self.assertRaises(ValueError):
             add_game('Pokemon:Yellow', 'PC', 'Action', 49.99, 101, 1998)
+
+
+if __name__ == '__main__':
+    unittest.main()

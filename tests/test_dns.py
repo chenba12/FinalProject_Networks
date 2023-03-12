@@ -1,6 +1,10 @@
+import os
+import sys
+
 from scapy.layers.dns import DNSRR, DNS
 from scapy.layers.inet import IP, UDP
 import unittest
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.client_sender import app_server_name, dns_response
 from app.dhcp import dns_server_ip
 
@@ -16,3 +20,7 @@ class TestDNS(unittest.TestCase):
         pkt = ip / udp / dns
         dns_response(pkt)
         assert app_server_ip == "10.0.2.15"
+
+
+if __name__ == '__main__':
+    unittest.main()

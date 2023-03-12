@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print(f"---------DNS server UP---------")
     if len(sys.argv) < 2:
         print("Using default Application server IP = 10.0.2.15")
-        print("Usage: sudo python3 dns.py <app_server_ip>")
+        print("Usage: sudo python3 ./app/dns.py <app_server_ip>")
     else:
         param1 = sys.argv[1]
         print(f"Application server IP: {param1}")

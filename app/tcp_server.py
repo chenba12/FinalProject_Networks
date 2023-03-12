@@ -1,3 +1,5 @@
+import sys
+
 from scapy.arch import get_if_hwaddr
 
 from dhcp import get_network_interface
@@ -13,7 +15,7 @@ import json
 # binds to ip "10.0.2.15" and port 30962
 
 # constants
-APP_SERVER_IP = "10.0.2.15"
+app_server_ip = "10.0.2.15"
 APP_SERVER_PORT = 30961
 BUFFER_SIZE = 1024
 
@@ -25,11 +27,11 @@ def start_server() -> None:
     """
     server_socket = socket.socket()
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_socket.bind((APP_SERVER_IP, APP_SERVER_PORT))
+    server_socket.bind((app_server_ip, APP_SERVER_PORT))
     print("----------Server Details----------")
     mac_addr = get_if_hwaddr(get_network_interface())
     print("MAC address: ", mac_addr)
-    print(f"IP address: {APP_SERVER_IP}")
+    print(f"IP address: {app_server_ip}")
     print(f"Port: {APP_SERVER_PORT}")
     server_socket.listen(10)
     while True:
@@ -165,6 +167,12 @@ def handle_request(client_socket, address) -> None:
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print("Using default Application server IP = 10.0.2.15")
+        print("Usage: sudo python3 ./app/tcp_server.py <app_server_ip>")
+    else:
+        app_server_ip = sys.argv[1]
+        print(f"Application server IP: {app_server_ip}")
     setup_db()
     first_setup()
     print("----------TCP Server----------")
