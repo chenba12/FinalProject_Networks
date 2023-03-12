@@ -2,6 +2,7 @@
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 import json
+# comment this for tests
 from message import error_message, result_message
 from games import Game, Base, validate_platform, validate_year, validate_category, validate_score
 # use this imports for tests

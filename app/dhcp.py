@@ -9,7 +9,7 @@ import random
 # THe client will also get the IP of the DNS server
 
 # constants
-network_interface = "wlo1"
+network_interface = "enp0s3"
 server_ip = "192.168.1.1"
 dns_server_ip = "192.168.1.2"
 clients = []
@@ -113,9 +113,8 @@ if __name__ == '__main__':
         print("Using default network interface = enp0s3")
         print("Usage: sudo python3 ./app/dhcp.py <network_interface>")
     else:
-        param1 = sys.argv[1]
-        print(f"Network interface: {param1}")
-        network_interface = param1
+        network_interface = sys.argv[1]
+        print(f"Network interface: {network_interface}")
     mac_addr = get_if_hwaddr(get_network_interface())
     print("MAC address of DHCP: ", mac_addr)
     sniff(filter=filter_port, prn=handle_dhcp, iface=network_interface)

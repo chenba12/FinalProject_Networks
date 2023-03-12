@@ -1,3 +1,4 @@
+import sys
 from time import sleep
 from scapy.layers.dns import DNSQR, DNSRR, DNS
 from scapy.layers.inet import IP, UDP
@@ -11,6 +12,7 @@ from dhcp import get_network_interface
 app_name = "mySQLApp.com"
 dns_server_ip = "192.168.1.2"
 app_server_ip = "10.0.2.15"
+iface = "enp0s3"
 
 
 def dns_server(pkt) -> None:
@@ -38,15 +40,13 @@ def dns_server(pkt) -> None:
 
 if __name__ == '__main__':
     print(f"---------DNS server UP---------")
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
+        print("Using default network interface = enp0s3")
         print("Using default Application server IP = 10.0.2.15")
-        print("Usage: sudo python3 ./app/dns.py <app_server_ip>")
+        print("Usage: sudo python3 ./app/dns.py <network_interface> <app_server_ip>")
     else:
-        param1 = sys.argv[1]
-        print(f"Application server IP: {param1}")
-        app_server_ip = param1
-
-    # Get the MAC address of the interface
-    mac_addr = get_if_hwaddr(get_network_interface())
-    print("MAC address of DNS: ", mac_addr)
+        iface = sys.argv[1]
+        app_server_ip = sys.argv[2]
+        print(f"Network interface: {iface}")
+        print(f"Application server IP: {app_server_ip}")
     sniff(filter='udp port 53', prn=dns_server)

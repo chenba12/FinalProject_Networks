@@ -4,6 +4,7 @@ from scapy.layers.dns import DNSQR, DNS, DNSRR
 from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Ether
 
+# comment this for tests
 from games import validate_platform, validate_category, validate_score, validate_year, validate_price, validate_name
 
 # use this import for tests
@@ -12,7 +13,7 @@ from games import validate_platform, validate_category, validate_score, validate
 mac_str = uuid.getnode()
 client_mac = ':'.join(['{:02x}'.format((mac_str >> i) & 0xff) for i in range(0, 48, 8)])
 broadcast = "255.255.255.255"
-network_interface = "wlo1"
+network_interface = "enp0s3"
 client_ip = "0.0.0.0"
 dns_server_ip = ""
 filter_port = "udp and (port 67 or 68)"
