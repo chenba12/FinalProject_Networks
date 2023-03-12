@@ -3,12 +3,12 @@ import socket
 
 from client_sender import get_app_server_ip, get_app_server_port, validate_id_check, validate_platform_check, \
     validate_category_check, validate_price_check, validate_score_check, validate_year_check, validate_name_check, \
-    validate_price_range_check
+    validate_price_range_check, get_client_ip
 from games import json_to_game
 from message import add_game_message, json_to_message, get_all_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
-    update_game_message, Message, str_to_message
+    update_game_message, exit_message
 
 # This file handles the TCP client methods
 # connects to the Application server TCP socket
@@ -16,17 +16,23 @@ from message import add_game_message, json_to_message, get_all_message, get_game
 BUFFER_SIZE = 1024
 
 
-def tcp_connect_to_app_server():
+def tcp_connect_to_app_server(client_ip):
     """
     Open TCP socket in order to connect to the Application server TCP socket
     """
     print("----------TCP Connection----------")
-    print(f"Server details: ({get_app_server_ip()} {get_app_server_port()})")
+    print(f"Server details: ({get_app_server_ip()}:{get_app_server_port()})")
+    print(f"Client details: ({client_ip}:20961)")
     client_socket = socket.socket()
+    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    client_socket.bind((client_ip, 20961))
     client_socket.connect((get_app_server_ip(), get_app_server_port()))
     print("This is a SQL server")
     handle_request(client_socket)
     client_socket.close()
+
+
+# sudo ip addr add 192.168.1.100/24 dev enp0s3
 
 
 def handle_request(client_socket):
@@ -130,6 +136,8 @@ def handle_request(client_socket):
                     tcp_handle_respond(client_socket, request)
                 case 13:
                     print("Exit...")
+                    request = exit_message()
+                    client_socket.send(bytes(json.dumps(request.to_json()), encoding="utf-8"))
                     break
 
 

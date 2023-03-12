@@ -4,7 +4,7 @@ import random
 
 from client_sender import validate_platform_check, validate_category_check, validate_price_check, \
     validate_score_check, validate_year_check, validate_id_check, get_app_server_ip, get_app_server_port, \
-    validate_price_range_check, validate_name_check
+    validate_price_range_check, validate_name_check, get_client_ip
 from message import get_all_message, add_game_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
@@ -20,15 +20,14 @@ time_out = 2
 retransmission = 0b0
 
 
-def udp_connect_to_server():
+def udp_connect_to_server(client_ip):
     global buffer_size, received_counter, time_out, retransmission
-    # Create a socket object
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # Set the initial sequence number
+    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    client_socket.bind((client_ip, 20961))
     server_address = (get_app_server_ip(), get_app_server_port())
     seq_num = random.randint(0, 1000)
     client_socket.settimeout(time_out)
-    # Send the SYN message to the server
 
     while True:
         try:

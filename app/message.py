@@ -136,3 +136,7 @@ def error_message(message: str) -> Message:
     return Message("error", {
         "value": message
     })
+
+
+def exit_message() -> Message:
+    return Message("exit", "")
