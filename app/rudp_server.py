@@ -67,6 +67,7 @@ def udp_server_start():
             client_list.append(client_address)
 
             client_thread = threading.Thread(target=handle_client(client_address, control_bits, seq_num, server_socket))
+            client_thread.start()
 
 
 # header
@@ -96,7 +97,7 @@ def handle_client(client_address, control_bits, seq_num, server_socket):
                 retransmission_flag, last_chunk_flag, data = unpack_data(received_packet)
             if control_bits == PSH:
                 handle_psh_request(client_address, seq_num, data, server_socket)
-                # TODO uncomment to drop packets
+                # uncomment to drop packets
                 # if random.random() < 0.5:
                 #     print("dropping...")
                 #     continue
@@ -168,7 +169,6 @@ def handle_psh_request(client_address, seq_num, data: Message, server_socket) ->
                 seq_num_r = send_to_chunks(client_address, seq_num, result, server_socket)
                 seq_num = seq_num_r
             except ValueError:
-                # TODO check those
                 error_to_send = error_message("Game Catalog is empty")
                 server_socket.send(bytes(json.dumps(error_to_send), encoding="utf-8"))
         case "addGame":
@@ -394,7 +394,7 @@ def pack_data(control_bits, seq_num, total_chunks, chunk_num, retransmission_fla
     checksum = hashlib.sha256(header).digest()[:4]
     data_bytes = data.__str__().encode('utf-8')
     packet = header + checksum + data_bytes
-    # TODO uncomment to make faulty check_sum
+    # uncomment to make faulty check_sum
     # if random.random() < 0.1:
     #     # introduce random error in checksum
     #     i = random.randint(0, 3)

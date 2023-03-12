@@ -3,7 +3,7 @@ import socket
 
 from client_sender import get_app_server_ip, get_app_server_port, validate_id_check, validate_platform_check, \
     validate_category_check, validate_price_check, validate_score_check, validate_year_check, validate_name_check, \
-    validate_price_range_check, get_client_ip
+    validate_price_range_check
 from games import json_to_game
 from message import add_game_message, json_to_message, get_all_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
@@ -22,7 +22,10 @@ def tcp_connect_to_app_server(client_ip):
     """
     print("----------TCP Connection----------")
     print(f"Server details: ({get_app_server_ip()}:{get_app_server_port()})")
-    print(f"Client details: ({client_ip}:20961)")
+    if client_ip == '':
+        print(f"Client details: (localhost:20961)")
+    else:
+        print(f"Client details: ({client_ip}:20961)")
     client_socket = socket.socket()
     client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     client_socket.bind((client_ip, 20961))

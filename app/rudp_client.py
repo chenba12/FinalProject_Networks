@@ -4,13 +4,13 @@ import random
 
 from client_sender import validate_platform_check, validate_category_check, validate_price_check, \
     validate_score_check, validate_year_check, validate_id_check, get_app_server_ip, get_app_server_port, \
-    validate_price_range_check, validate_name_check, get_client_ip
+    validate_price_range_check, validate_name_check
 from message import get_all_message, add_game_message, get_game_by_id_message, \
     get_game_by_name_message, get_game_by_platform_message, get_game_by_category_message, delete_game_message, \
     get_game_by_score_message, get_game_by_year_message, get_game_by_price_message, get_game_by_price_between_message, \
     update_game_message, Message
 from rudp_server import pack_data, unpack_data, concatenate_chunks, SYN, SYN_ACK, PSH_ACK, PSH, \
-    FIN, FIN_ACK, ACK, NAK, handle_buffer, handle_recv_success, handle_timeout_error
+    FIN, FIN_ACK, ACK, NAK, handle_recv_success, handle_timeout_error
 
 # constants
 data_chunks = []
@@ -22,6 +22,12 @@ retransmission = 0b0
 
 def udp_connect_to_server(client_ip):
     global buffer_size, received_counter, time_out, retransmission
+    print("----------RUDP Connection----------")
+    print(f"Server details: ({get_app_server_ip()}:{get_app_server_port()})")
+    if client_ip == '':
+        print(f"Client details: (localhost:20961)")
+    else:
+        print(f"Client details: ({client_ip}:20961)")
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     client_socket.bind((client_ip, 20961))

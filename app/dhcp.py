@@ -19,6 +19,7 @@ dns_name = "myDNS.com"
 subnet_mask = "255.255.255.0"
 broadcast = "255.255.255.255"
 client_mac = ""
+client_ip = ""
 
 
 def generate_client_ip():
